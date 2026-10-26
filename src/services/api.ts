@@ -28,7 +28,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const data = isJson ? await response.json() : null;
 
   if (!response.ok) {
-    const errorMsg = data?.error || response.statusText || 'Erro na requisição';
+    let errorMsg = data?.error;
+    if (!errorMsg) {
+      if ([500, 502, 503, 504].includes(response.status)) {
+        errorMsg = 'Não foi possível conectar ao servidor. Tente novamente em instantes.';
+      } else {
+        errorMsg = response.statusText || 'Erro na requisição';
+      }
+    }
     const err = new Error(errorMsg);
     (err as any).status = response.status;
     (err as any).data = data;
