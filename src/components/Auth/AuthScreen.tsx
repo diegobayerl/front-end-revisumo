@@ -97,14 +97,14 @@ export const AuthScreen: React.FC = () => {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Senha {isSignUp && <span className="font-normal text-slate-500">(mínimo 12 caracteres)</span>}
+              Senha {isSignUp && <span className="font-normal text-slate-500">(mínimo 8 caracteres)</span>}
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
               <input
                 type="password"
                 required
-                minLength={12}
+                minLength={8}
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="••••••••••••"
