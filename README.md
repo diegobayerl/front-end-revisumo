@@ -1,43 +1,40 @@
-# Revisumo — Front-end
+# Revisumo — Web App do Aluno
 
-Aplicação web do Revisumo: espaço de estudos do aluno, cronograma, ciclo Pomodoro, anotações e landing page.
-
----
-
-## Requisitos
-
-- Node.js 24+
-- Back-end do Revisumo rodando na porta 3333
+Aplicação web do aluno construída em **React 19 + Vite + TypeScript + Tailwind CSS**.
 
 ---
 
-## Como Executar
+## Recursos Implementados
 
-1. Instale as dependências:
-   ```bash
-   npm install
-   ```
-
-2. Inicie a aplicação na porta **3000**:
-   ```bash
-   npm run dev
-   ```
-
-3. Abra no navegador:
-   - **Site/Landing page:** `http://localhost:3000`
-   - **Espaço do aluno (Workspace):** `http://localhost:3000/app`
+- **Dashboard:** Visão do dia, métricas de foco, roteiro diário e widget Pomodoro integrado.
+- **Meus Estudos:** Gestão de concursos/vestibulares, disciplinas com pesos (1 a 100), tópicos e importação de edital em PDF com IA (Google Gemini).
+- **Cronograma Semanal:** Mapeamento de janelas semanais de disponibilidade e gerador de cronograma inteligente com revisões espaçadas (1, 7 e 30 dias).
+- **Relógio Pomodoro:** Temporizador com anel de progresso, fases de foco e pausas configuráveis, recuperável após recarregar a tela, histórico paginado.
+- **Caderno de Anotações:** Editor e leitor de notas filtradas por matéria e conteúdo.
+- **Agenda Temporal:** Visualizações em Mês (42 dias), Semana (com divisão de eventos pela meia-noite e side-by-side de sobreposições) e Pipeline Kanban por status.
+- **Tema Claro / Escuro:** Alternância instantânea com persistência local.
 
 ---
 
-## Estrutura
+## Executar Localmente
 
-```text
-front-end/
-├── index.html        # Painel de estudos do aluno
-├── workspace.js      # Lógica da interface, cronograma e Pomodoro
-├── workspace.css     # Estilos visuais do painel
-├── server.js         # Servidor HTTP Express com proxy para :3333
-├── lib/              # Módulos JS (calendário, regras de domínio, editores)
-├── site/             # Landing page institucional e comercial
-└── test/             # Testes automatizados das regras de interface
+```bash
+# 1. Instalar dependências
+npm install
+
+# 2. Iniciar servidor Vite na porta 3000
+npm run dev
+```
+
+Acesse em seu navegador:
+**http://localhost:3000**
+
+As chamadas para `/api/*` são roteadas automaticamente via proxy reverso do Vite para a API na porta `3333`.
+
+---
+
+## Testes
+
+```bash
+npm test
 ```
