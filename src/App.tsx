@@ -4124,15 +4124,6 @@ export const App: React.FC = () => {
               </button>
             ))}
           </nav>
-          <div className="aside-note">
-            <span>Um pouco, todo dia.</span>
-            <p>
-              A constância leva você
-              <br />
-              mais longe.
-            </p>
-            <div className="mini-line" />
-          </div>
           <button type="button" id="logout" className="logout" onClick={handleLogout}>
             ↗ Sair da conta
           </button>

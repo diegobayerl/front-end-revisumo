@@ -10,9 +10,10 @@
   --surface-alt: #ebf0ed;
   --focus-bg: #e7efe8;
   --accent-text: #1d5d50;
-  --radius: 3px;
+  --radius: 8px;
+  --panel-radius: 10px;
   --button-height: 40px;
-  --button-radius: 3px;
+  --button-radius: 7px;
   --button-font: 12px;
   --button-padding: 16px;
   --button-gap: 8px;
@@ -462,35 +463,8 @@ textarea {
   font-weight: 700;
 }
 
-.aside-note {
-  margin-top: auto;
-  padding: 18px 12px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-alt);
-  margin-bottom: 12px;
-  flex-shrink: 0;
-}
-
-.aside-note span {
-  font-weight: 700;
-  font-size: 12px;
-  display: block;
-}
-
-.aside-note p {
-  font-size: 11.5px;
-  margin: 6px 0 0;
-}
-
-.mini-line {
-  height: 3px;
-  width: 32px;
-  background: var(--green);
-  margin-top: 14px;
-}
-
 .logout {
+  margin-top: auto;
   background: transparent;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -674,7 +648,7 @@ textarea {
 .agenda-panel {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--panel-radius);
   margin-bottom: 22px;
   overflow: hidden;
 }
@@ -1106,7 +1080,7 @@ textarea {
   padding: 22px;
   background: var(--focus-bg);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--panel-radius);
   margin-bottom: 22px;
   text-align: center;
 }
@@ -1410,7 +1384,7 @@ textarea {
   grid-template-columns: 240px minmax(0, 1fr);
   min-height: 560px;
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--panel-radius);
   background: var(--surface);
   overflow: hidden;
 }
@@ -2792,7 +2766,7 @@ textarea {
   color: var(--ink);
   border: 1px solid var(--line);
   border-top: 3px solid var(--green);
-  border-radius: var(--radius);
+  border-radius: var(--panel-radius);
   padding: 24px 26px;
   width: 520px;
   max-width: 100%;
