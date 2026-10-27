@@ -1707,33 +1707,9 @@ export const App: React.FC = () => {
               </div>
             </section>
           </div>
-
-          {/* Bottom Goal Banner */}
-          <section className="dash-goal-banner">
-            <div className="dash-goal-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <circle cx="12" cy="12" r="6" />
-                <circle cx="12" cy="12" r="2" />
-              </svg>
-            </div>
-            <div className="dash-goal-copy">
-              <h3>Mantenha suas revisões em dia</h3>
-              <p>
-                Distribua os conteúdos do edital nos seus horários livres e acompanhe cada ciclo até a prova.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="primary"
-              onClick={() => setPage('cronograma')}
-            >
-              Planejar horários →
-            </button>
-          </section>
           </div>
 
-          {/* Right Sidebar Rail: Calendar + Upcoming + Quick Links */}
+          {/* Right Sidebar Rail: Calendar + Upcoming */}
           <div className="dash-side-col" role="region" aria-label="Calendário e próximas atividades">
             <section className="dash-section-card dash-calendar-card">
               <div className="dash-calendar-head">
@@ -1845,78 +1821,6 @@ export const App: React.FC = () => {
                   Nenhuma atividade futura pendente.
                 </p>
               )}
-            </section>
-
-            <section className="dash-section-card dash-quick-card">
-              <div className="dash-section-head">
-                <h2>Acesso rápido</h2>
-              </div>
-              <div className="dash-quick-grid">
-                <button
-                  type="button"
-                  className="dash-quick-tile"
-                  onClick={() => {
-                    setImportingStudy(true);
-                    setPage('cadastro');
-                  }}
-                >
-                  <span className="tone-green">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                  </span>
-                  <small>Novo Edital</small>
-                </button>
-
-                <button
-                  type="button"
-                  className="dash-quick-tile"
-                  onClick={() => setPage('cronograma')}
-                >
-                  <span className="tone-teal">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="8" y1="6" x2="21" y2="6" />
-                      <line x1="8" y1="12" x2="21" y2="12" />
-                      <line x1="8" y1="18" x2="21" y2="18" />
-                      <line x1="3" y1="6" x2="3.01" y2="6" />
-                      <line x1="3" y1="12" x2="3.01" y2="12" />
-                      <line x1="3" y1="18" x2="3.01" y2="18" />
-                    </svg>
-                  </span>
-                  <small>Cronograma</small>
-                </button>
-
-                <button
-                  type="button"
-                  className="dash-quick-tile"
-                  onClick={() => openEditor('anotacoes')}
-                >
-                  <span className="tone-amber">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 20h9" />
-                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                    </svg>
-                  </span>
-                  <small>Anotar</small>
-                </button>
-
-                <button
-                  type="button"
-                  className="dash-quick-tile"
-                  onClick={() => openScheduleModal(day)}
-                >
-                  <span className="tone-coral">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                      <line x1="16" y1="2" x2="16" y2="6" />
-                      <line x1="8" y1="2" x2="8" y2="6" />
-                      <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                  </span>
-                  <small>Agendar</small>
-                </button>
-              </div>
             </section>
           </div>
         </div>
