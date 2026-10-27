@@ -24,7 +24,6 @@ type PageName =
   | 'dashboard'
   | 'cadastro'
   | 'cronograma'
-  | 'pomodoro'
   | 'anotacoes'
   | 'agenda'
   | 'configuracoes'
@@ -161,7 +160,6 @@ const pageTitles: Record<PageName, string> = {
   dashboard: 'Hoje',
   cadastro: 'Meus estudos',
   cronograma: 'Cronograma',
-  pomodoro: 'Pomodoro',
   anotacoes: 'Anotações',
   agenda: 'Agenda',
   configuracoes: 'Configurações',
@@ -1000,20 +998,19 @@ export const App: React.FC = () => {
             <span>
               {topicName(activeSession.conteudo_id) || activeSession.titulo}
             </span>
-            {activeSession.item_cronograma_id &&
-              !['estudo', 'dashboard'].includes(page) && (
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() =>
-                    navigate('estudo', activeSession.item_cronograma_id!)
-                  }
-                >
-                  Abrir este estudo →
-                </button>
-              )}
+            {activeSession.item_cronograma_id && page !== 'estudo' && (
+              <button
+                type="button"
+                className="text-button"
+                onClick={() =>
+                  navigate('estudo', activeSession.item_cronograma_id!)
+                }
+              >
+                Abrir este estudo →
+              </button>
+            )}
           </div>
-        ) : page === 'dashboard' ? null : (
+        ) : page === 'estudo' ? null : (
           <div className="focus-selection">
             <label>
               Disciplina
@@ -1056,7 +1053,7 @@ export const App: React.FC = () => {
             </label>
           </div>
         )}
-        {page === 'estudo' || (page === 'dashboard' && activeSession) ? null : (
+        {page === 'estudo' ? null : (
           <div className="clock-actions">
             {activeSession ? (
               <>
@@ -2818,47 +2815,6 @@ export const App: React.FC = () => {
     );
   };
 
-  // Pomodoro View
-  const renderPomodoroView = () => {
-    const rows = filteredSessions.filter(
-      (r) => !filters.history || r.disciplina_id === filters.history
-    );
-    return (
-      <>
-        <div className="pomodoro-solo">
-          {renderTimerCard(false)}
-        </div>
-
-        <section className="panel">
-          <div className="panel-heading">
-            <h2>Histórico de sessões</h2>
-          </div>
-          <div className="filter-bar">
-            <label>
-              Disciplina
-              <select
-                value={filters.history}
-                onChange={(e) => {
-                  setFilters((f) => ({ ...f, history: e.target.value }));
-                  setHistoryPage(0);
-                }}
-              >
-                <option value="">Todas as disciplinas</option>
-                {filteredSubjects.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <span className="filter-count">{rows.length} sessões</span>
-          </div>
-          {renderHistoryTable(rows)}
-        </section>
-      </>
-    );
-  };
-
   // Agenda View
   const renderAgenda = () => {
     const list = filteredItems.filter(
@@ -3948,9 +3904,7 @@ export const App: React.FC = () => {
 
   const pageTitle = pageTitles[page];
 
-  const allAllowed = ['dashboard', 'agenda', 'anotacoes', 'pomodoro'].includes(
-    page
-  );
+  const allAllowed = ['dashboard', 'agenda', 'anotacoes'].includes(page);
   const showContestContext =
     !['cadastro', 'estudo', 'configuracoes'].includes(page) &&
     concursos.length > 0;
@@ -3989,17 +3943,6 @@ export const App: React.FC = () => {
           <line x1="3" y1="6" x2="3.01" y2="6" />
           <line x1="3" y1="12" x2="3.01" y2="12" />
           <line x1="3" y1="18" x2="3.01" y2="18" />
-        </svg>
-      ),
-    },
-    {
-      id: 'pomodoro',
-      label: 'Pomodoro',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="13" r="8" />
-          <path d="M12 9v4l2.5 2.5" />
-          <path d="M9 2h6" />
         </svg>
       ),
     },
@@ -4132,7 +4075,7 @@ export const App: React.FC = () => {
             </div>
           </header>
 
-          {activeSession && page !== 'estudo' && page !== 'pomodoro' && (
+          {activeSession && page !== 'estudo' && page !== 'dashboard' && (
             <div className="active-focus-banner">
               <span>
                 ●{' '}
@@ -4156,7 +4099,7 @@ export const App: React.FC = () => {
                 onClick={() =>
                   activeSession.item_cronograma_id
                     ? navigate('estudo', activeSession.item_cronograma_id)
-                    : setPage('pomodoro')
+                    : setPage('dashboard')
                 }
               >
                 Abrir sessão →
@@ -4173,8 +4116,6 @@ export const App: React.FC = () => {
               ? renderRegistration()
               : page === 'cronograma'
               ? renderSchedule()
-              : page === 'pomodoro'
-              ? renderPomodoroView()
               : page === 'anotacoes'
               ? renderNotesView()
               : page === 'agenda'
