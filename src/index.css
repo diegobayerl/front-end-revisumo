@@ -892,10 +892,7 @@ textarea {
 }
 
 .dashboard-day-scroll {
-  max-height: 420px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
+  display: block;
 }
 
 .dashboard-preview-navigation {
