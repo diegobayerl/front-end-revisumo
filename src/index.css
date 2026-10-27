@@ -598,18 +598,10 @@ textarea {
 .study-switcher {
   display: flex;
   align-items: center;
-  gap: 10px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 4px 6px 4px 12px;
-}
-
-.study-switcher span {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--muted);
-  white-space: nowrap;
+  padding: 4px 8px;
 }
 
 .study-switcher select {

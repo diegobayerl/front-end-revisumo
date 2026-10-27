@@ -4047,7 +4047,6 @@ export const App: React.FC = () => {
             <div className="top-bar-controls">
               {showContestContext && (
                 <div id="contest-context" className="study-switcher">
-                  <span>Estudo:</span>
                   <select
                     aria-label="Estudo em foco"
                     value={effectiveContestId}
