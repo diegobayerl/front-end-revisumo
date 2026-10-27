@@ -830,10 +830,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 20px 28px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--panel-radius);
+  padding: 0;
   margin-bottom: 32px;
   flex-wrap: wrap;
 }
