@@ -157,36 +157,15 @@ async function fetchAllRows(path: string): Promise<any[]> {
   return [...new Map(rows.map((row) => [row.id, row])).values()];
 }
 
-const pageTitles: Record<PageName, [string, string]> = {
-  configuracoes: ['Configurações.', 'Ajuste a aparência e o seu ritmo de estudo.'],
-  dashboard: [
-    'Seu estudo, um dia de cada vez.',
-    'O roteiro de hoje, seu foco e o que você já concluiu.',
-  ],
-  cadastro: [
-    'Seus estudos e disciplinas.',
-    'Crie com IA e personalize suas matérias e conteúdos.',
-  ],
-  cronograma: [
-    'Monte seu cronograma.',
-    'Escolha o que estudar e reserve um horário no seu dia.',
-  ],
-  pomodoro: [
-    'Encontre seu ritmo de foco.',
-    'Relógio na parte superior. Seu histórico de estudo logo abaixo.',
-  ],
-  anotacoes: [
-    'Tudo o que você quer lembrar.',
-    'Suas anotações organizadas por estudo, disciplina e conteúdo.',
-  ],
-  agenda: [
-    'Seu estudo no calendário.',
-    'Veja os horários por mês, por semana ou em etapas.',
-  ],
-  estudo: [
-    'Seu espaço de estudo.',
-    'Conteúdo, anotações e Pomodoro no mesmo lugar.',
-  ],
+const pageTitles: Record<PageName, string> = {
+  dashboard: 'Hoje',
+  cadastro: 'Meus estudos',
+  cronograma: 'Cronograma',
+  pomodoro: 'Pomodoro',
+  anotacoes: 'Anotações',
+  agenda: 'Agenda',
+  configuracoes: 'Configurações',
+  estudo: 'Sessão de estudo',
 };
 
 export const App: React.FC = () => {
@@ -795,9 +774,6 @@ export const App: React.FC = () => {
     actionNode?: React.ReactNode
   ) => (
     <div className="empty-state">
-      <span className="empty-mark" aria-hidden="true">
-        ◫
-      </span>
       <h3>{title}</h3>
       <p>{text}</p>
       {actionNode}
@@ -970,7 +946,7 @@ export const App: React.FC = () => {
     return (
       <section className={`focus-panel ${compact ? 'compact-focus' : ''}`}>
         <div className="focus-panel-heading">
-          <span className="eyebrow">POMODORO</span>
+          <strong>Pomodoro</strong>
           <button
             type="button"
             className="icon-button"
@@ -978,7 +954,10 @@ export const App: React.FC = () => {
             aria-label="Ajustar durações do Pomodoro"
             onClick={() => openEditor('settings')}
           >
-            ⚙
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
           </button>
         </div>
         <div className="phase-tabs">
@@ -1257,24 +1236,9 @@ export const App: React.FC = () => {
         : previewDay === dayKey()
         ? 'Hoje'
         : dateOnly(previewDay);
-    const dayTitle =
-      day === dayKey()
-        ? 'Seu roteiro de hoje'
-        : new Intl.DateTimeFormat('pt-BR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          }).format(parseDay(day));
-
     return (
       <>
-        <div className="dashboard-toolbar">
-          <div>
-            <span className="eyebrow">
-              {selectedCompetition?.nome || 'SEUS ESTUDOS'}
-            </span>
-            <h2>{dayTitle}</h2>
-          </div>
+        <div className="dashboard-summary-bar">
           <div className="day-navigation">
             <button
               type="button"
@@ -1306,36 +1270,53 @@ export const App: React.FC = () => {
               Hoje
             </button>
           </div>
-        </div>
 
-        <div className="daily-metrics">
-          <div>
-            <span className="metric-icon">◫</span>
-            <strong>{summary.pending.length}</strong>
-            <span>Atividades pendentes</span>
-          </div>
-          <div>
-            <span className="metric-icon">✓</span>
-            <strong>{summary.completed.length}</strong>
-            <span>Atividades concluídas</span>
-          </div>
-          <div>
-            <span className="metric-icon">◷</span>
-            <strong>{duration(summary.seconds)}</strong>
-            <span>Tempo planejado</span>
-          </div>
-          <div>
-            <span className="metric-icon">▷</span>
-            <strong>{duration(focused)}</strong>
-            <span>Foco nas sessões do dia</span>
+          <div className="metrics-inline">
+            <div className="metric-item">
+              <strong>{summary.pending.length}</strong>
+              <span>pendentes</span>
+            </div>
+            <div className="metric-item">
+              <strong>{summary.completed.length}</strong>
+              <span>concluídos</span>
+            </div>
+            <div className="metric-item">
+              <strong>{duration(summary.seconds)}</strong>
+              <span>planejados</span>
+            </div>
+            <div className="metric-item">
+              <strong>{duration(focused)}</strong>
+              <span>de foco</span>
+            </div>
           </div>
         </div>
 
         <div className="dashboard-layout">
           <div>
+            {overdue > 0 && (
+              <button
+                type="button"
+                className="overdue-notice"
+                onClick={() => {
+                  setFilters((f) => ({ ...f, scheduleStatus: 'pendente' }));
+                  setPage('cronograma');
+                }}
+              >
+                Você tem {overdue} atividade(s) pendente(s) de dias anteriores.
+                Abrir cronograma →
+              </button>
+            )}
+
             <section className="panel">
               <div className="panel-heading">
-                <h2>{day === dayKey() ? 'Hoje' : dateOnly(day)}</h2>
+                <h2>{day === dayKey() ? 'Roteiro de hoje' : dateOnly(day)}</h2>
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => openScheduleModal(day)}
+                >
+                  + Agendar
+                </button>
               </div>
               <div className="dashboard-day-scroll">
                 {summary.pending.length
@@ -1346,7 +1327,7 @@ export const App: React.FC = () => {
                         : 'Nenhuma atividade agendada para este dia.',
                       summary.completed.length
                         ? 'Você pode revisar uma matéria ou planejar o próximo dia.'
-                        : 'Confira outro dia na seção abaixo ou agende uma atividade para hoje.'
+                        : 'Agende uma atividade ou consulte os próximos dias abaixo.'
                     )}
               </div>
             </section>
@@ -1361,7 +1342,7 @@ export const App: React.FC = () => {
                       aria-label="Dia anterior da prévia"
                       onClick={() => setPreviewDay(shiftDay(previewDay, -1))}
                     >
-                      ‹‹
+                      ‹
                     </button>
                     <span>{previewLabel}</span>
                     <button
@@ -1370,7 +1351,7 @@ export const App: React.FC = () => {
                       aria-label="Próximo dia da prévia"
                       onClick={() => setPreviewDay(shiftDay(previewDay, 1))}
                     >
-                      ››
+                      ›
                     </button>
                   </span>
                 </h2>
@@ -1396,47 +1377,10 @@ export const App: React.FC = () => {
                 {summary.completed.map(renderStudyRow)}
               </section>
             )}
-
-            {overdue > 0 && (
-              <button
-                type="button"
-                className="overdue-notice"
-                onClick={() => {
-                  setFilters((f) => ({ ...f, scheduleStatus: 'pendente' }));
-                  setPage('cronograma');
-                }}
-              >
-                ◷ Você tem {overdue} atividade(s) pendente(s) de dias anteriores.
-                Abrir cronograma →
-              </button>
-            )}
-
-            <section className="panel">
-              <div className="panel-heading">
-                <h2>Últimas sessões</h2>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => setPage('pomodoro')}
-                >
-                  Ver histórico →
-                </button>
-              </div>
-              {renderHistoryTable(filteredSessions.slice(0, 4), {
-                compact: true,
-              })}
-            </section>
           </div>
 
           <div>
             {renderTimerCard(true)}
-            <div className="quiet-tip">
-              <span>✦</span>
-              <p>
-                Seu roteiro começa no cronograma.
-                <br />O foco acontece um estudo de cada vez.
-              </p>
-            </div>
           </div>
         </div>
       </>
@@ -1511,15 +1455,10 @@ export const App: React.FC = () => {
       {!editalPreview ? (
         <>
           <div className="ai-import-copy">
-            <span className="eyebrow">INTELIGÊNCIA ARTIFICIAL</span>
             <h2 id="ai-import-title">Cadastre seu estudo pelo edital</h2>
             <p>
               Envie um PDF para extrair as disciplinas e os conteúdos. Revise a
               prévia antes de confirmar o cadastro.
-            </p>
-            <p className="form-help">
-              O arquivo será enviado ao Google Gemini para análise. O cronograma
-              pode ser montado depois, com seus horários disponíveis.
             </p>
             <div style={{ marginTop: '20px' }}>
               <button
@@ -1527,7 +1466,7 @@ export const App: React.FC = () => {
                 className="secondary"
                 onClick={() => openEditor('concursos')}
               >
-                + Ou cadastrar estudo manualmente
+                + Cadastrar manualmente
               </button>
             </div>
           </div>
@@ -1780,7 +1719,6 @@ export const App: React.FC = () => {
                   </button>
                   <div className="resource-heading">
                     <div>
-                      <span className="eyebrow">CONTEÚDOS DA DISCIPLINA</span>
                       <h2>{selectedSub.nome}</h2>
                       <p>
                         Peso {selectedSub.peso} no edital · {rows.length}{' '}
@@ -1853,12 +1791,9 @@ export const App: React.FC = () => {
             <>
               <div className="resource-heading">
                 <div>
-                  <span className="eyebrow">
-                    {course.banca || 'SEU OBJETIVO'}
-                  </span>
                   <h2>{course.nome}</h2>
                   <p>
-                    Prova: {dateOnly(course.data_prova)} ·{' '}
+                    {course.banca ? `${course.banca} · ` : ''}Prova: {dateOnly(course.data_prova)} ·{' '}
                     {filteredSubjects.length} disciplinas
                   </p>
                 </div>
@@ -1905,7 +1840,6 @@ export const App: React.FC = () => {
                             className="subject-card-open"
                             onClick={() => setCadSubjectId(row.id)}
                           >
-                            <span className="subject-mark">▤</span>
                             <h3>{row.nome}</h3>
                             <span className="subject-subtitle">
                               {cList.length} conteúdos · {done} concluídos
@@ -2029,16 +1963,6 @@ export const App: React.FC = () => {
 
     return (
       <>
-        <div className="schedule-intro">
-          <div>
-            <h2>Monte seu cronograma, passo a passo</h2>
-            <p>
-              Defina sua disponibilidade, organize os assuntos e confirme sua
-              agenda.
-            </p>
-          </div>
-        </div>
-
         <nav className="schedule-flow" aria-label="Etapas do cronograma">
           <ol>
             {labels.map(([label, desc], index) => {
@@ -2082,10 +2006,7 @@ export const App: React.FC = () => {
           {currentStep === 1 && (
             <section className="availability-panel schedule-step">
               <div className="panel-heading">
-                <div>
-                  <span className="eyebrow">PASSO 1</span>
-                  <h2>Quando você pode estudar?</h2>
-                </div>
+                <h2>Quando você pode estudar?</h2>
                 <span className="subtle">
                   {availability.length} horários semanais
                 </span>
@@ -2151,7 +2072,6 @@ export const App: React.FC = () => {
               <div className="panel-heading">
                 <h2>Organize com IA</h2>
               </div>
-              <span className="eyebrow">PASSO 2</span>
               <p className="form-help">
                 Planeje até a véspera da prova. A IA prioriza as matérias e o
                 sistema distribui o edital com revisões de 1, 7 e 30 dias,
@@ -2510,7 +2430,6 @@ export const App: React.FC = () => {
           </button>
           <div className="resource-heading">
             <div>
-              <span className="eyebrow">SUAS ANOTAÇÕES</span>
               <h2>{disc?.nome || 'Anotações livres'}</h2>
               <p>{notes.length} anotações</p>
             </div>
@@ -2595,9 +2514,6 @@ export const App: React.FC = () => {
                     className="subject-card-open"
                     onClick={() => setFilters((f) => ({ ...f, notes: g.id }))}
                   >
-                    <span className="subject-mark" aria-hidden="true">
-                      ✎
-                    </span>
                     <h3>{g.nome}</h3>
                     <span className="subject-subtitle">
                       {g.notes.length} anotações
@@ -2712,14 +2628,14 @@ export const App: React.FC = () => {
             <section className="panel">
               <div className="study-detail-heading">
                 <div>
-                  <span className="eyebrow">
+                  <span className="study-discipline-context">
+                    {disc.nome}
                     {item
-                      ? `${dateOnly(dayKey(item.inicio_previsto))} · ${timeLabel(
+                      ? ` · ${dateOnly(dayKey(item.inicio_previsto))} · ${timeLabel(
                           item.inicio_previsto
                         )}–${timeLabel(endOf(item))}`
-                      : 'ESTUDO DA DISCIPLINA'}
+                      : ''}
                   </span>
-                  <span className="study-discipline-context">{disc.nome}</span>
                   <h2>{selTopic?.titulo || disc.nome}</h2>
                   {selTopic?.descricao ? (
                     <p>{selTopic.descricao}</p>
@@ -2909,33 +2825,13 @@ export const App: React.FC = () => {
     );
     return (
       <>
-        <div className="pomodoro-page-clock">
+        <div className="pomodoro-solo">
           {renderTimerCard(false)}
-          <section className="focus-guide">
-            <span className="eyebrow">UM CICLO DE CADA VEZ</span>
-            <h2>Concentração com espaço para respirar.</h2>
-            <ol>
-              <li>Escolha a disciplina e o conteúdo.</li>
-              <li>Inicie o foco e estude até o relógio terminar.</li>
-              <li>Conclua o ciclo para registrar e escolha sua pausa.</li>
-            </ol>
-            <p>
-              Você pode pausar ou cancelar. Concluir um ciclo de foco não
-              conclui automaticamente um estudo agendado.
-            </p>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => openEditor('settings')}
-            >
-              Ajustar foco e pausas
-            </button>
-          </section>
         </div>
 
         <section className="panel">
           <div className="panel-heading">
-            <h2>Histórico de estudo</h2>
+            <h2>Histórico de sessões</h2>
           </div>
           <div className="filter-bar">
             <label>
@@ -3452,25 +3348,18 @@ export const App: React.FC = () => {
   // First Run
   const renderFirstRun = () => (
     <section className="first-study">
-      <div className="first-study-mark" aria-hidden="true">
-        ▤
-      </div>
-      <span className="eyebrow">SEU PRIMEIRO PASSO</span>
       <h2>Sem estudo cadastrado</h2>
       <p>
-        Envie seu edital para a IA organizar as matérias e os assuntos. Depois,
-        adicione o que quiser estudar e planeje suas atividades.
+        Envie seu edital para extrair as matérias e os assuntos, ou cadastre seu
+        estudo manualmente para organizar seu cronograma.
       </p>
       <button
         type="button"
         className="primary"
         onClick={() => setPage('cadastro')}
       >
-        Criar primeiro estudo com IA
+        Cadastrar primeiro estudo
       </button>
-      <span className="first-study-help">
-        Tudo começa com um estudo. O restante você organiza no seu ritmo.
-      </span>
     </section>
   );
 
@@ -3976,31 +3865,27 @@ export const App: React.FC = () => {
               revi<span>sumo</span>
               <span className="brand-dot">.</span>
             </a>
-            <span className="eyebrow">UM DIA DE CADA VEZ</span>
-            <h1>
-              Seu próximo passo
-              <br />
-              começa com
-              <br />
-              <em>foco.</em>
-            </h1>
-            <p>
-              Organize o que estudar. Encontre seu ritmo.
-              <br />
-              Transforme pequenos blocos em grandes conquistas.
-            </p>
-            <div className="story-foot">MENOS DISTRAÇÃO. MAIS DIREÇÃO.</div>
+            <div className="auth-story-main">
+              <h1>
+                Organize seu edital.
+                <br />
+                Estude no seu <em>ritmo.</em>
+              </h1>
+              <p>
+                Planejamento, revisões e foco reunidos em um só lugar.
+              </p>
+            </div>
+            <div className="story-foot">Revisumo</div>
           </div>
 
           <div className="auth-form">
-            <span className="eyebrow">SEU ESPAÇO DE ESTUDO</span>
             <h2 id="auth-title">
-              {registering ? 'Comece no seu ritmo.' : 'Bom ter você aqui.'}
+              {registering ? 'Criar conta' : 'Entrar'}
             </h2>
             <p id="auth-sub">
               {registering
-                ? 'Seu estudo, suas disciplinas e seu progresso em um só lugar.'
-                : 'Entre para continuar de onde parou.'}
+                ? 'Preencha seus dados para começar.'
+                : 'Acesse seu espaço de estudos.'}
             </p>
             <form id="auth-form" onSubmit={handleAuthSubmit}>
               {registering && (
@@ -4038,9 +3923,7 @@ export const App: React.FC = () => {
                 />
               </label>
               <button className="primary" id="auth-submit" disabled={authBusy}>
-                {registering
-                  ? 'Criar meu espaço →'
-                  : 'Entrar no meu espaço →'}
+                {registering ? 'Criar conta' : 'Entrar'}
               </button>
               <p id="auth-error" role="alert">
                 {authError}
@@ -4055,26 +3938,15 @@ export const App: React.FC = () => {
                 setAuthError('');
               }}
             >
-              {registering ? 'Já tenho conta' : 'Ainda não tenho conta'}
+              {registering ? 'Já tenho conta' : 'Criar uma conta'}
             </button>
-            <div className="local-badge">Seu espaço pessoal de estudos</div>
           </div>
         </div>
       </>
     );
   }
 
-  const [titleText, descText] = pageTitles[page];
-  const breadcrumbLabel: Record<PageName, string> = {
-    dashboard: 'Dashboard',
-    cadastro: 'Cadastrar estudo',
-    cronograma: 'Cronograma de estudo',
-    pomodoro: 'Pomodoro',
-    anotacoes: 'Anotações',
-    agenda: 'Agenda',
-    configuracoes: 'Configurações',
-    estudo: 'Detalhes do estudo',
-  };
+  const pageTitle = pageTitles[page];
 
   const allAllowed = ['dashboard', 'agenda', 'anotacoes', 'pomodoro'].includes(
     page
@@ -4082,6 +3954,90 @@ export const App: React.FC = () => {
   const showContestContext =
     !['cadastro', 'estudo', 'configuracoes'].includes(page) &&
     concursos.length > 0;
+
+  const navItems: Array<{ id: PageName; label: string; icon: React.ReactNode }> = [
+    {
+      id: 'dashboard',
+      label: 'Hoje',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="7" height="9" rx="1" />
+          <rect x="14" y="3" width="7" height="5" rx="1" />
+          <rect x="14" y="12" width="7" height="9" rx="1" />
+          <rect x="3" y="16" width="7" height="5" rx="1" />
+        </svg>
+      ),
+    },
+    {
+      id: 'cadastro',
+      label: 'Estudos',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'cronograma',
+      label: 'Cronograma',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <line x1="3" y1="6" x2="3.01" y2="6" />
+          <line x1="3" y1="12" x2="3.01" y2="12" />
+          <line x1="3" y1="18" x2="3.01" y2="18" />
+        </svg>
+      ),
+    },
+    {
+      id: 'pomodoro',
+      label: 'Pomodoro',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="13" r="8" />
+          <path d="M12 9v4l2.5 2.5" />
+          <path d="M9 2h6" />
+        </svg>
+      ),
+    },
+    {
+      id: 'anotacoes',
+      label: 'Anotações',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="8" y1="13" x2="16" y2="13" />
+          <line x1="8" y1="17" x2="13" y2="17" />
+        </svg>
+      ),
+    },
+    {
+      id: 'agenda',
+      label: 'Agenda',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      ),
+    },
+    {
+      id: 'configuracoes',
+      label: 'Configurações',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      ),
+    },
+  ];
 
   return (
     <>
@@ -4097,42 +4053,73 @@ export const App: React.FC = () => {
             revi<span>sumo</span>
             <span className="brand-dot">.</span>
           </a>
-          <span className="nav-label">MEU ESPAÇO</span>
           <nav aria-label="Navegação principal">
-            {(
-              [
-                ['dashboard', '◫', 'Dashboard'],
-                ['cadastro', '◎', 'Cadastrar estudo'],
-                ['cronograma', '▤', 'Cronograma de estudo'],
-                ['pomodoro', '◷', 'Pomodoro'],
-                ['anotacoes', '✎', 'Anotações'],
-                ['agenda', '▦', 'Agenda'],
-                ['configuracoes', '⚙', 'Configurações'],
-              ] as const
-            ).map(([pId, icon, label]) => (
+            {navItems.map((item) => (
               <button
-                key={pId}
+                key={item.id}
                 type="button"
                 className={
-                  (page === 'estudo' ? 'dashboard' : page) === pId
+                  (page === 'estudo' ? 'dashboard' : page) === item.id
                     ? 'selected'
                     : ''
                 }
-                onClick={() => setPage(pId)}
+                onClick={() => setPage(item.id)}
               >
-                {icon} <span>{label}</span>
+                {item.icon}
+                <span>{item.label}</span>
               </button>
             ))}
           </nav>
-          <button type="button" id="logout" className="logout" onClick={handleLogout}>
-            ↗ Sair da conta
-          </button>
+          <div className="aside-footer">
+            <span className="profile">
+              <b id="avatar">{user.nome[0]?.toUpperCase() || 'E'}</b>
+              <span id="username">{user.nome}</span>
+            </span>
+            <button
+              type="button"
+              id="logout"
+              className="logout-icon"
+              onClick={handleLogout}
+            >
+              Sair
+            </button>
+          </div>
         </aside>
 
         <main>
-          <header>
-            <span id="breadcrumb">Meu espaço / {breadcrumbLabel[page]}</span>
-            <div className="header-actions">
+          <header className="top-bar">
+            <div className="top-bar-title">
+              <h1 id="page-title">{pageTitle}</h1>
+              {page === 'dashboard' && (
+                <span className="top-bar-date">
+                  {new Intl.DateTimeFormat('pt-BR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                  }).format(new Date())}
+                </span>
+              )}
+            </div>
+
+            <div className="top-bar-controls">
+              {showContestContext && (
+                <div id="contest-context" className="study-switcher">
+                  <span>Estudo:</span>
+                  <select
+                    aria-label="Estudo em foco"
+                    value={effectiveContestId}
+                    onChange={(e) => setContest(e.target.value)}
+                  >
+                    {allAllowed && <option value="all">Todos os estudos</option>}
+                    {concursos.map((row) => (
+                      <option key={row.id} value={row.id}>
+                        {row.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <button
                 type="button"
                 className="theme-toggle"
@@ -4142,55 +4129,8 @@ export const App: React.FC = () => {
               >
                 {theme === 'dark' ? '☀' : '☾'}
               </button>
-              <span className="profile">
-                <b id="avatar">{user.nome[0]?.toUpperCase() || 'E'}</b>
-                <span id="username">{user.nome}</span>
-              </span>
             </div>
           </header>
-
-          {page !== 'estudo' && (
-            <section className="page-heading">
-              <div>
-                <span className="eyebrow">CONSTRUA SUA CONSTÂNCIA</span>
-                <h1 id="page-title">{titleText}</h1>
-                <p id="page-description">{descText}</p>
-              </div>
-              <span id="today" className="date-pill">
-                {new Intl.DateTimeFormat('pt-BR', {
-                  weekday: 'short',
-                  day: 'numeric',
-                  month: 'long',
-                }).format(new Date())}
-              </span>
-            </section>
-          )}
-
-          {showContestContext && (
-            <section id="contest-context" className="contest-context">
-              <label>
-                Estudo em foco
-                <select
-                  value={effectiveContestId}
-                  onChange={(e) => setContest(e.target.value)}
-                >
-                  {allAllowed && <option value="all">Todos os estudos</option>}
-                  {concursos.map((row) => (
-                    <option key={row.id} value={row.id}>
-                      {row.nome}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <span>
-                {selectedCompetition
-                  ? `${selectedCompetition.banca || 'Banca a definir'} · Prova: ${dateOnly(
-                      selectedCompetition.data_prova
-                    )}`
-                  : 'Seus estudos reunidos em um só lugar'}
-              </span>
-            </section>
-          )}
 
           {activeSession && page !== 'estudo' && page !== 'pomodoro' && (
             <div className="active-focus-banner">
@@ -4243,11 +4183,6 @@ export const App: React.FC = () => {
               ? renderSettingsView()
               : renderStudyView()}
           </div>
-
-          <footer>
-            Feito para estudar com intenção.
-            <span>Revisumo · primeira versão</span>
-          </footer>
         </main>
       </div>
 
