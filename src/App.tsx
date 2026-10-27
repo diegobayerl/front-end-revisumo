@@ -372,6 +372,16 @@ export const App: React.FC = () => {
     } else {
       document.title = pageTitles[page];
     }
+    const faviconSvg =
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231b4d3e'/%3E%3Cpath d='M21 46V21h7.5v4.6c1.8-3.3 4.9-5.1 9-5.1 1.4 0 2.6.2 3.5.5v7.6c-1.1-.4-2.4-.6-4-.6-4.7 0-8 2.8-8 7.8V46H21z' fill='%23f6f5f0'/%3E%3Ccircle cx='45.5' cy='42' r='4.2' fill='%23d97745'/%3E%3C/svg%3E";
+    let link = document.querySelector<HTMLLinkElement>("link[rel*='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.type = 'image/svg+xml';
+    link.href = faviconSvg;
   }, [user, registering, page]);
 
   // Helpers
