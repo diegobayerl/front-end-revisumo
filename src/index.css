@@ -1888,12 +1888,12 @@ textarea {
 
 /* Signature Focus / Pomodoro Card */
 .focus-panel {
-  padding: 28px;
+  padding: 24px;
   background: var(--focus-bg);
   color: var(--focus-ink);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--panel-radius);
-  margin-bottom: 28px;
+  border-radius: 18px;
+  margin-bottom: 0;
   text-align: center;
 }
 
@@ -1901,12 +1901,31 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
+}
+
+.focus-panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.focus-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.focus-live-dot[data-active='true'] {
+  background: var(--terracotta);
+  box-shadow: 0 0 0 4px rgba(217, 119, 69, 0.24);
 }
 
 .focus-panel-heading strong {
   font-family: 'Manrope', sans-serif;
-  font-size: 0.875rem;
+  font-size: 0.92rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--focus-ink);
@@ -1916,6 +1935,10 @@ textarea {
   background: rgba(255, 255, 255, 0.08);
   border-color: transparent;
   color: #c2d9cf;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  border-radius: 9px;
 }
 
 .focus-panel-heading .icon-button:hover {
@@ -1929,14 +1952,14 @@ textarea {
   justify-content: center;
   padding: 4px;
   background: rgba(0, 0, 0, 0.22);
-  border-radius: var(--radius);
+  border-radius: 10px;
 }
 
 .phase-tabs button {
   border: 0;
   background: transparent;
   color: #9ab5a9;
-  border-radius: 6px;
+  border-radius: 7px;
   padding: 7px 10px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -1945,18 +1968,18 @@ textarea {
 }
 
 .phase-tabs button.active {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.15);
   color: #ffffff;
 }
 
 .clock-ring {
   --clock-progress: 0deg;
-  width: 204px;
-  height: 204px;
+  width: 196px;
+  height: 196px;
   border-radius: 50%;
   background: conic-gradient(var(--terracotta) var(--clock-progress), rgba(255, 255, 255, 0.12) 0);
-  margin: 28px auto;
-  padding: 5px;
+  margin: 22px auto;
+  padding: 6px;
 }
 
 .clock-ring > div {
@@ -1973,25 +1996,33 @@ textarea {
 
 .clock-ring strong {
   font-family: 'Manrope', sans-serif;
-  font-weight: 600;
-  font-size: 2.85rem;
+  font-weight: 700;
+  font-size: 2.65rem;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
   color: #ffffff;
+  line-height: 1.05;
 }
 
 .clock-ring span {
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   color: #9ab5a9;
   margin-top: 6px;
+  max-width: 140px;
+  line-height: 1.35;
 }
 
 .clock-actions {
   display: flex;
+  flex-direction: column;
   gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-  align-items: center;
+  align-items: stretch;
+}
+
+.clock-sub-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
 }
 
 .focus-panel .clock-actions .primary {
@@ -1999,6 +2030,8 @@ textarea {
   border-color: #ffffff;
   color: #15382c;
   width: 100%;
+  font-weight: 700;
+  border-radius: 10px;
 }
 
 .focus-panel .clock-actions .primary:hover:not(:disabled) {
@@ -2007,7 +2040,24 @@ textarea {
 
 .focus-panel .clock-actions .secondary {
   background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border-radius: 10px;
+  font-size: 0.78rem;
+}
+
+.focus-panel .clock-actions .secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.focus-panel .clock-actions .clock-cancel-btn {
+  color: #ffb8b0;
+  border-color: rgba(255, 184, 176, 0.22);
+}
+
+.focus-panel .clock-actions .clock-cancel-btn:hover:not(:disabled) {
+  background: rgba(181, 68, 58, 0.25);
   color: #ffffff;
 }
 
@@ -2824,64 +2874,176 @@ textarea {
   margin-bottom: 18px;
 }
 
-/* Study Detail View & Study Chat */
-.study-breadcrumb {
+/* Study Detail View (Focus Screen) & Study Chat */
+.focus-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.focus-screen-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 18px;
+}
+
+.focus-topbar-left {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 24px;
+  min-width: 0;
 }
 
-.study-breadcrumb > span {
+.focus-back-btn {
+  flex-shrink: 0;
+}
+
+.focus-breadcrumb-trail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.8125rem;
   color: var(--muted);
+  min-width: 0;
 }
 
-.study-detail-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr);
-  gap: 32px;
-  align-items: start;
+.focus-breadcrumb-trail i {
+  font-style: normal;
+  opacity: 0.6;
 }
 
-.study-detail-heading {
+.focus-breadcrumb-trail strong {
+  color: var(--ink);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.focus-topbar-right {
   display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.study-discipline-context {
-  display: block;
-  font-size: 0.8125rem;
-  color: var(--muted);
-  margin: 0 0 6px;
-  font-weight: 600;
-}
-
-.study-detail-heading h2 {
-  font-size: 1.5rem;
-  margin-bottom: 10px;
-}
-
-.detail-actions {
-  display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
-  border-top: 1px solid var(--line);
-  padding-top: 20px;
-  margin-top: 20px;
+}
+
+.focus-schedule-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-schedule-pill svg {
+  width: 14px;
+  height: 14px;
+  color: var(--green);
+}
+
+.focus-screen-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 22px;
+  align-items: stretch;
+}
+
+.focus-main-col,
+.focus-side-col {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+
+.focus-topic-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.focus-topic-title-wrap {
+  flex: 1;
+  min-width: 220px;
+}
+
+.focus-topic-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.focus-discipline-tag {
+  display: inline-block;
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: var(--green);
+  background: var(--soft);
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+
+.focus-topic-header h2 {
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+.focus-topic-switcher {
+  min-width: 220px;
+  max-width: 280px;
+}
+
+.focus-topic-switcher select {
+  margin: 0;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 0.8rem;
+  border-radius: 10px;
+  background: var(--surface-alt);
+}
+
+.focus-topic-desc {
+  font-size: 0.85rem;
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.focus-notes-card,
+.focus-history-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .study-chat {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  height: 260px;
+  flex: 1;
+  min-height: 220px;
+  max-height: 380px;
   overflow-y: auto;
   padding: 16px;
   background: var(--surface-alt);
-  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  border-radius: 14px;
   margin-bottom: 16px;
 }
 
@@ -2890,7 +3052,7 @@ textarea {
   width: 100%;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: 12px;
   padding: 14px 16px;
 }
 
@@ -2905,11 +3067,13 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
 }
 
 .study-chat-meta time {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: var(--muted);
 }
 
@@ -2917,20 +3081,30 @@ textarea {
   margin: auto;
   text-align: center;
   font-size: 0.8125rem;
+  max-width: 340px;
+}
+
+.study-chat-compose {
+  margin-top: auto;
 }
 
 .study-chat-input {
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 10px;
-  margin-bottom: 6px;
 }
 
 .study-chat-input textarea {
   margin: 0;
-  min-height: 64px;
+  min-height: 60px;
   max-height: 140px;
   flex: 1;
+  border-radius: 12px;
+}
+
+.study-chat-input .primary {
+  border-radius: 12px;
+  padding: 0 22px;
 }
 
 /* Notes Lines */
@@ -3463,13 +3637,9 @@ textarea {
 
 @media (max-width: 1120px) {
   .dash-hero-row,
-  .dash-body-grid {
+  .dash-body-grid,
+  .focus-screen-grid {
     grid-template-columns: 1fr;
-  }
-  .dash-side-col {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-    align-items: start;
   }
   .schedule-flow ol {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3488,7 +3658,6 @@ textarea {
     bottom: 12px;
   }
   .dash-bottom-row,
-  .study-detail-layout,
   .subject-cards,
   .pipeline {
     grid-template-columns: 1fr;

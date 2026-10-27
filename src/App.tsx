@@ -962,7 +962,10 @@ export const App: React.FC = () => {
     return (
       <section className={`focus-panel ${compact ? 'compact-focus' : ''}`}>
         <div className="focus-panel-heading">
-          <strong>Pomodoro</strong>
+          <div className="focus-panel-title">
+            <span className="focus-live-dot" data-active={Boolean(activeSession && activeSession.status === 'rodando')} />
+            <strong>Cronômetro Pomodoro</strong>
+          </div>
           <button
             type="button"
             className="icon-button"
@@ -1001,22 +1004,22 @@ export const App: React.FC = () => {
             <span>
               {activeSession
                 ? remaining === 0
-                  ? 'Ciclo completo. Registre sua sessão.'
+                  ? 'Ciclo completo! Finalize abaixo.'
                   : activeSession.status === 'pausada'
-                  ? 'Pausado. Retome quando quiser.'
-                  : 'Uma coisa de cada vez.'
-                : 'Pronto para começar?'}
+                  ? 'Pausado · retome quando quiser'
+                  : 'Em foco · mantenha a concentração'
+                : 'Pronto para iniciar o bloco'}
             </span>
           </div>
         </div>
         {clockNotice ? <p className="clock-notice">{clockNotice}</p> : null}
-        {activeSession ? (
+        {activeSession && page !== 'estudo' ? (
           <div className="focus-context">
             <strong>{subjectName(activeSession.disciplina_id)}</strong>
             <span>
               {topicName(activeSession.conteudo_id) || activeSession.titulo}
             </span>
-            {activeSession.item_cronograma_id && page !== 'estudo' && (
+            {activeSession.item_cronograma_id && (
               <button
                 type="button"
                 className="text-button"
@@ -1071,48 +1074,74 @@ export const App: React.FC = () => {
             </label>
           </div>
         )}
-        {page === 'estudo' ? null : (
-          <div className="clock-actions">
-            {activeSession ? (
-              <>
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={() =>
-                    handleTimerAction(
-                      activeSession.status === 'pausada' ? 'retomar' : 'pausar'
-                    )
-                  }
-                >
-                  {activeSession.status === 'pausada' ? '▷ Retomar' : 'Ⅱ Pausar'}
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  disabled={remaining > 0}
-                  onClick={() => handleTimerAction('concluir')}
-                >
-                  Concluir ciclo
-                </button>
-                <button
-                  type="button"
-                  className="text-button danger"
-                  onClick={() => handleTimerAction('cancelar')}
-                >
-                  Cancelar
-                </button>
-              </>
-            ) : (
+        <div className="clock-actions">
+          {activeSession ? (
+            <>
               <button
                 type="button"
                 className="primary"
-                onClick={() => handleTimerAction('iniciar')}
+                onClick={() =>
+                  handleTimerAction(
+                    activeSession.status === 'pausada' ? 'retomar' : 'pausar'
+                  )
+                }
               >
-                ▷ Iniciar {phaseLabel[currentPhase].toLowerCase()}
+                {activeSession.status === 'pausada' ? '▷ Retomar foco' : 'Ⅱ Pausar'}
               </button>
-            )}
-          </div>
-        )}
+              <div className="clock-sub-actions">
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={async () => {
+                    await handleTimerAction('finalizar');
+                    if (page === 'estudo') {
+                      setPage('dashboard');
+                      showToast(
+                        'Atividade finalizada e tempo de estudo registrado.'
+                      );
+                    }
+                  }}
+                >
+                  ✓ Finalizar estudo
+                </button>
+                <button
+                  type="button"
+                  className="secondary clock-cancel-btn"
+                  onClick={async () => {
+                    await handleTimerAction('cancelar');
+                    if (page === 'estudo') {
+                      showToast('Sessão cancelada.');
+                    }
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="primary"
+              onClick={async () => {
+                if (page === 'estudo') {
+                  try {
+                    await startFocus({
+                      disciplina_id: ctxOverride.disciplina_id || studySubjectId,
+                      conteudo_id: ctxOverride.conteudo_id || studyTopicId || null,
+                      item_cronograma_id: ctxOverride.item_cronograma_id || null,
+                    });
+                  } catch (err: any) {
+                    showToast(err.message);
+                  }
+                } else {
+                  await handleTimerAction('iniciar');
+                }
+              }}
+            >
+              ▷ Iniciar {phaseLabel[currentPhase].toLowerCase()}
+            </button>
+          )}
+        </div>
         <p className="focus-footnote">
           {pomodoroSettings.foco_segundos / 60} min de foco ·{' '}
           {pomodoroSettings.pausa_curta_segundos / 60} min de descanso
@@ -2999,6 +3028,14 @@ export const App: React.FC = () => {
       );
     }
     const selTopic = topic(studyTopicId);
+    const discTopics = conteudos.filter((c) => c.disciplina_id === disc.id);
+    const discSessions = pomodoroSessions.filter(
+      (r) => r.disciplina_id === disc.id
+    );
+    const discTotalSeconds = discSessions
+      .filter((r) => r.fase === 'foco')
+      .reduce((sum, r) => sum + sessionElapsed(r, nowTick), 0);
+
     const rows = anotacoes.filter(
       (r) =>
         r.disciplina_id === disc.id &&
@@ -3006,13 +3043,6 @@ export const App: React.FC = () => {
     );
     const draftKey = `${disc.id}:${studyTopicId || 'livre'}`;
     const draftBody = noteDrafts[draftKey] || '';
-    const currentExecution =
-      activeSession &&
-      (item
-        ? activeSession.item_cronograma_id === item.id
-        : activeSession.disciplina_id === disc.id)
-        ? activeSession
-        : null;
     const context = {
       disciplina_id: disc.id,
       conteudo_id: studyTopicId || null,
@@ -3050,126 +3080,94 @@ export const App: React.FC = () => {
     };
 
     return (
-      <>
-        <div className="study-breadcrumb">
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => setPage('dashboard')}
-          >
-            ← Dashboard
-          </button>
-          <span>
-            {competition(disc.concurso_id)?.nome || ''} / {disc.nome}
-          </span>
+      <div className="focus-screen">
+        <div className="focus-screen-topbar">
+          <div className="focus-topbar-left">
+            <button
+              type="button"
+              className="row-btn focus-back-btn"
+              onClick={() => setPage('dashboard')}
+            >
+              ← Voltar para Hoje
+            </button>
+            <div className="focus-breadcrumb-trail">
+              <span>{competition(disc.concurso_id)?.nome || 'Estudo'}</span>
+              <i>›</i>
+              <strong>{disc.nome}</strong>
+            </div>
+          </div>
+
+          <div className="focus-topbar-right">
+            {item && (
+              <span className="focus-schedule-pill">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <polyline points="12 7 12 12 15 15" />
+                </svg>
+                {dateOnly(dayKey(item.inicio_previsto))} ·{' '}
+                {timeLabel(item.inicio_previsto)}–{timeLabel(endOf(item))} (
+                {duration(item.duracao_segundos)})
+              </span>
+            )}
+            <span className="badge">Peso {disc.peso}</span>
+            {item ? renderBadge(item.status) : null}
+          </div>
         </div>
 
-        <div className="study-detail-layout">
-          <div>
-            <section className="panel">
-              <div className="study-detail-heading">
-                <div>
-                  <span className="study-discipline-context">
-                    {disc.nome}
-                    {item
-                      ? ` · ${dateOnly(dayKey(item.inicio_previsto))} · ${timeLabel(
-                          item.inicio_previsto
-                        )}–${timeLabel(endOf(item))}`
-                      : ''}
-                  </span>
+        <div className="focus-screen-grid">
+          <div className="focus-main-col">
+            <section className="dash-section-card focus-topic-card">
+              <div className="focus-topic-header">
+                <div className="focus-topic-title-wrap">
+                  <div className="focus-topic-tags">
+                    <span className="focus-discipline-tag">{disc.nome}</span>
+                    {item?.tipo === 'revisao' && (
+                      <span className="review-label">
+                        ↻ Revisão {item.revisao_numero}
+                      </span>
+                    )}
+                  </div>
                   <h2>{selTopic?.titulo || disc.nome}</h2>
-                  {selTopic?.descricao ? (
-                    <p>{selTopic.descricao}</p>
-                  ) : !selTopic && disc.descricao ? (
-                    <p>{disc.descricao}</p>
-                  ) : null}
-                  {renderLegalReferences(selTopic?.referencias_legais)}
                 </div>
-                {item ? (
-                  renderBadge(item.status)
-                ) : (
-                  <span className="badge">Peso {disc.peso}</span>
+
+                {discTopics.length > 0 && (
+                  <div className="focus-topic-switcher">
+                    <select
+                      aria-label="Alternar conteúdo da disciplina"
+                      value={studyTopicId}
+                      onChange={(e) => setStudyTopicId(e.target.value)}
+                    >
+                      <option value="">Visão geral da disciplina</option>
+                      {discTopics.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.titulo}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 )}
               </div>
 
-              <div className="detail-actions">
-                {currentExecution ? (
-                  <>
-                    <button
-                      type="button"
-                      className="primary"
-                      onClick={() =>
-                        handleTimerAction(
-                          currentExecution.status === 'pausada'
-                            ? 'retomar'
-                            : 'pausar'
-                        )
-                      }
-                    >
-                      {currentExecution.status === 'pausada'
-                        ? 'Retomar'
-                        : 'Pausar'}
-                    </button>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={async () => {
-                        await handleTimerAction('finalizar');
-                        setPage('dashboard');
-                        showToast(
-                          'Atividade finalizada e tempo de estudo registrado.'
-                        );
-                      }}
-                    >
-                      Finalizar
-                    </button>
-                    <button
-                      type="button"
-                      className="text-button danger"
-                      onClick={async () => {
-                        await handleTimerAction('cancelar');
-                        setPage('dashboard');
-                        showToast(
-                          'Execução cancelada. Você pode iniciar a atividade novamente.'
-                        );
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                  </>
-                ) : !item || item.status === 'pendente' ? (
-                  <button
-                    type="button"
-                    className="primary"
-                    onClick={async () => {
-                      try {
-                        setPhase('foco');
-                        await startFocus({
-                          disciplina_id: item?.disciplina_id || studySubjectId,
-                          conteudo_id:
-                            item?.conteudo_id || studyTopicId || null,
-                          item_cronograma_id: item?.id || null,
-                        });
-                      } catch (err: any) {
-                        showToast(err.message);
-                      }
-                    }}
-                  >
-                    Iniciar
-                  </button>
-                ) : null}
-              </div>
+              {selTopic?.descricao ? (
+                <p className="focus-topic-desc">{selTopic.descricao}</p>
+              ) : !selTopic && disc.descricao ? (
+                <p className="focus-topic-desc">{disc.descricao}</p>
+              ) : null}
+
+              {renderLegalReferences(selTopic?.referencias_legais)}
             </section>
 
-            <section className="panel">
-              <div className="panel-heading">
+            <section className="dash-section-card focus-notes-card">
+              <div className="dash-section-head">
                 <div>
-                  <h2>Comentários e anotações</h2>
+                  <h2>Caderno de anotações</h2>
                   <p className="panel-subtitle">
-                    {selTopic?.titulo || 'Anotações da disciplina'}
+                    {selTopic?.titulo || `Registros de ${disc.nome}`}
                   </p>
                 </div>
+                <span className="badge">{rows.length} nota(s)</span>
               </div>
+
               <div
                 className="study-chat"
                 role="log"
@@ -3195,10 +3193,11 @@ export const App: React.FC = () => {
                     ))
                 ) : (
                   <p className="study-chat-empty">
-                    Registre aqui suas ideias, dúvidas e o que aprendeu.
+                    Registre aqui seus resumos, pontos de atenção, artigos de lei e dúvidas durante o foco.
                   </p>
                 )}
               </div>
+
               <form onSubmit={submitStudyNote} className="study-chat-compose">
                 <div className="study-chat-input">
                   <textarea
@@ -3207,7 +3206,7 @@ export const App: React.FC = () => {
                     required
                     maxLength={30000}
                     aria-label="Nova anotação"
-                    placeholder="Escreva uma anotação…"
+                    placeholder="Escreva uma anotação rápida… (Enter para salvar, Shift + Enter para nova linha)"
                     value={draftBody}
                     onChange={(e) =>
                       setNoteDrafts((d) => ({
@@ -3227,12 +3226,9 @@ export const App: React.FC = () => {
                     className="primary"
                     disabled={noteBusy}
                   >
-                    Enviar
+                    Salvar
                   </button>
                 </div>
-                <span className="subtle">
-                  Enter para enviar · Shift + Enter para uma nova linha
-                </span>
                 <p className="inline-error" role="alert">
                   {noteError}
                 </p>
@@ -3240,22 +3236,19 @@ export const App: React.FC = () => {
             </section>
           </div>
 
-          <div>
+          <div className="focus-side-col">
             {renderTimerCard(true, context)}
-            <section className="panel">
-              <div className="panel-heading">
-                <h2>Foco nesta disciplina</h2>
+
+            <section className="dash-section-card focus-history-card">
+              <div className="dash-section-head">
+                <h2>Histórico na matéria</h2>
+                <span className="badge">{duration(discTotalSeconds)}</span>
               </div>
-              {renderHistoryTable(
-                pomodoroSessions
-                  .filter((r) => r.disciplina_id === disc.id)
-                  .slice(0, 3),
-                { compact: true }
-              )}
+              {renderHistoryTable(discSessions.slice(0, 4), { compact: true })}
             </section>
           </div>
         </div>
-      </>
+      </div>
     );
   };
 
