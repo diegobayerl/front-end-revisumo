@@ -550,6 +550,11 @@ export const App: React.FC = () => {
       }
       if (!activeSession) return;
       await apiCall(`pomodoro/${activeSession.id}/${action}`, 'POST', {});
+      if (action === 'finalizar' && activeSession.conteudo_id) {
+        await apiCall(`conteudos/${activeSession.conteudo_id}`, 'PATCH', {
+          status: 'concluido',
+        }).catch(() => {});
+      }
       await refreshData();
       if (action === 'concluir') {
         let nextPhase: 'foco' | 'pausa_curta' | 'pausa_longa' = 'foco';
@@ -1464,19 +1469,25 @@ export const App: React.FC = () => {
                   const subTopics = conteudos.filter(
                     (c) => c.disciplina_id === sub.id
                   );
-                  const subDoneTopics = subTopics.filter(
-                    (c) => c.status === 'concluido'
-                  ).length;
                   const subItems = filteredItems.filter(
                     (i) =>
                       i.disciplina_id === sub.id && i.status !== 'cancelado'
                   );
-                  const subDoneItems = subItems.filter(
+                  const subDoneItemsList = subItems.filter(
                     (i) => i.status === 'concluido'
+                  );
+                  const subDoneItems = subDoneItemsList.length;
+                  const subDoneTopics = subTopics.filter(
+                    (c) =>
+                      c.status === 'concluido' ||
+                      subDoneItemsList.some((i) => i.conteudo_id === c.id)
                   ).length;
                   const totalUnits = subTopics.length || subItems.length || 1;
                   const doneUnits = subTopics.length
-                    ? subDoneTopics
+                    ? Math.max(
+                        subDoneTopics,
+                        Math.min(subTopics.length, subDoneItems)
+                      )
                     : subDoneItems;
                   const pct = Math.min(
                     100,
@@ -1526,7 +1537,7 @@ export const App: React.FC = () => {
                         </div>
                         <small>
                           {subTopics.length
-                            ? `${subDoneTopics} / ${subTopics.length} conteúdos`
+                            ? `${doneUnits} / ${subTopics.length} conteúdos`
                             : `${subDoneItems} / ${subItems.length} estudos`}
                         </small>
                       </div>
@@ -2212,41 +2223,52 @@ export const App: React.FC = () => {
                   ) : null}
                   {rows.length ? (
                     <div className="topic-list">
-                      {rows.map((row) => (
-                        <article key={row.id} className="topic-row">
-                          <button
-                            type="button"
-                            className={`topic-status ${
-                              row.status === 'concluido' ? 'checked' : ''
-                            }`}
-                            aria-label={`${
-                              row.status === 'concluido' ? 'Reabrir' : 'Concluir'
-                            } ${row.titulo}`}
-                            onClick={async () => {
-                              try {
-                                await apiCall(`conteudos/${row.id}`, 'PATCH', {
-                                  status:
-                                    row.status === 'concluido'
+                      {rows.map((row) => {
+                        const isTopicDone =
+                          row.status === 'concluido' ||
+                          itensCronograma.some(
+                            (i) =>
+                              i.conteudo_id === row.id &&
+                              i.status === 'concluido'
+                          );
+                        const effectiveStatus = isTopicDone
+                          ? 'concluido'
+                          : row.status;
+                        return (
+                          <article key={row.id} className="topic-row">
+                            <button
+                              type="button"
+                              className={`topic-status ${
+                                isTopicDone ? 'checked' : ''
+                              }`}
+                              aria-label={`${
+                                isTopicDone ? 'Reabrir' : 'Concluir'
+                              } ${row.titulo}`}
+                              onClick={async () => {
+                                try {
+                                  await apiCall(`conteudos/${row.id}`, 'PATCH', {
+                                    status: isTopicDone
                                       ? 'pendente'
                                       : 'concluido',
-                                });
-                                await refreshData();
-                              } catch (err: any) {
-                                showToast(err.message);
-                              }
-                            }}
-                          >
-                            {row.status === 'concluido' ? '✓' : '○'}
-                          </button>
-                          <div>
-                            <strong>{row.titulo}</strong>
-                            <p>{row.descricao || 'Sem descrição'}</p>
-                            {renderLegalReferences(row.referencias_legais)}
-                          </div>
-                          {renderBadge(row.status)}
-                          {renderRowActions('conteudos', row.id)}
-                        </article>
-                      ))}
+                                  });
+                                  await refreshData();
+                                } catch (err: any) {
+                                  showToast(err.message);
+                                }
+                              }}
+                            >
+                              {isTopicDone ? '✓' : '○'}
+                            </button>
+                            <div>
+                              <strong>{row.titulo}</strong>
+                              <p>{row.descricao || 'Sem descrição'}</p>
+                              {renderLegalReferences(row.referencias_legais)}
+                            </div>
+                            {renderBadge(effectiveStatus)}
+                            {renderRowActions('conteudos', row.id)}
+                          </article>
+                        );
+                      })}
                     </div>
                   ) : (
                     renderEmpty(
@@ -2300,9 +2322,21 @@ export const App: React.FC = () => {
                       const cList = conteudos.filter(
                         (c) => c.disciplina_id === row.id
                       );
-                      const done = cList.filter(
-                        (c) => c.status === 'concluido'
+                      const subDoneItemsList = itensCronograma.filter(
+                        (i) =>
+                          i.disciplina_id === row.id && i.status === 'concluido'
+                      );
+                      const doneByTopic = cList.filter(
+                        (c) =>
+                          c.status === 'concluido' ||
+                          subDoneItemsList.some((i) => i.conteudo_id === c.id)
                       ).length;
+                      const done = cList.length
+                        ? Math.max(
+                            doneByTopic,
+                            Math.min(cList.length, subDoneItemsList.length)
+                          )
+                        : subDoneItemsList.length;
                       return (
                         <article key={row.id} className="subject-card">
                           <button
