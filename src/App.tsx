@@ -1306,98 +1306,90 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        <div className="dashboard-layout">
-          <div>
-            {overdue > 0 && (
-              <button
-                type="button"
-                className="overdue-notice"
-                onClick={() => {
-                  setFilters((f) => ({ ...f, scheduleStatus: 'pendente' }));
-                  setPage('cronograma');
-                }}
-              >
-                Você tem {overdue} atividade(s) pendente(s) de dias anteriores.
-                Abrir cronograma →
-              </button>
-            )}
+        {overdue > 0 && (
+          <button
+            type="button"
+            className="overdue-notice"
+            onClick={() => {
+              setFilters((f) => ({ ...f, scheduleStatus: 'pendente' }));
+              setPage('cronograma');
+            }}
+          >
+            Você tem {overdue} atividade(s) pendente(s) de dias anteriores.
+            Abrir cronograma →
+          </button>
+        )}
 
-            <section className="panel">
-              <div className="panel-heading">
-                <h2>{day === dayKey() ? 'Roteiro de hoje' : dateOnly(day)}</h2>
+        <section className="panel">
+          <div className="panel-heading">
+            <h2>{day === dayKey() ? 'Roteiro de hoje' : dateOnly(day)}</h2>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => openScheduleModal(day)}
+            >
+              + Agendar
+            </button>
+          </div>
+          <div className="dashboard-day-scroll">
+            {summary.pending.length
+              ? summary.pending.map(renderStudyRow)
+              : renderEmpty(
+                  summary.completed.length
+                    ? 'Atividades do dia concluídas.'
+                    : 'Nenhuma atividade agendada para este dia.',
+                  summary.completed.length
+                    ? 'Você pode revisar uma matéria ou planejar o próximo dia.'
+                    : 'Agende uma atividade ou consulte os próximos dias abaixo.'
+                )}
+          </div>
+        </section>
+
+        <section className="panel dashboard-preview">
+          <div className="panel-heading">
+            <h2>
+              <span className="dashboard-preview-navigation">
                 <button
                   type="button"
-                  className="text-button"
-                  onClick={() => openScheduleModal(day)}
+                  className="icon-button"
+                  aria-label="Dia anterior da prévia"
+                  onClick={() => setPreviewDay(shiftDay(previewDay, -1))}
                 >
-                  + Agendar
+                  ‹
                 </button>
-              </div>
-              <div className="dashboard-day-scroll">
-                {summary.pending.length
-                  ? summary.pending.map(renderStudyRow)
-                  : renderEmpty(
-                      summary.completed.length
-                        ? 'Atividades do dia concluídas.'
-                        : 'Nenhuma atividade agendada para este dia.',
-                      summary.completed.length
-                        ? 'Você pode revisar uma matéria ou planejar o próximo dia.'
-                        : 'Agende uma atividade ou consulte os próximos dias abaixo.'
-                    )}
-              </div>
-            </section>
-
-            <section className="panel dashboard-preview">
-              <div className="panel-heading">
-                <h2>
-                  <span className="dashboard-preview-navigation">
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label="Dia anterior da prévia"
-                      onClick={() => setPreviewDay(shiftDay(previewDay, -1))}
-                    >
-                      ‹
-                    </button>
-                    <span>{previewLabel}</span>
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label="Próximo dia da prévia"
-                      onClick={() => setPreviewDay(shiftDay(previewDay, 1))}
-                    >
-                      ›
-                    </button>
-                  </span>
-                </h2>
-              </div>
-              <div className="dashboard-day-scroll">
-                {preview.items.filter((i) => i.status !== 'cancelado').length
-                  ? preview.items
-                      .filter((i) => i.status !== 'cancelado')
-                      .map(renderStudyRow)
-                  : renderEmpty(
-                      'Nenhuma atividade agendada para este dia.',
-                      'Use as setas para consultar outros dias ou agende uma atividade.'
-                    )}
-              </div>
-            </section>
-
-            {summary.completed.length > 0 && (
-              <section className="panel">
-                <div className="panel-heading">
-                  <h2>Concluídos no dia</h2>
-                  <span className="subtle">{summary.completed.length} estudos</span>
-                </div>
-                {summary.completed.map(renderStudyRow)}
-              </section>
-            )}
+                <span>{previewLabel}</span>
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label="Próximo dia da prévia"
+                  onClick={() => setPreviewDay(shiftDay(previewDay, 1))}
+                >
+                  ›
+                </button>
+              </span>
+            </h2>
           </div>
-
-          <div>
-            {renderTimerCard(true)}
+          <div className="dashboard-day-scroll">
+            {preview.items.filter((i) => i.status !== 'cancelado').length
+              ? preview.items
+                  .filter((i) => i.status !== 'cancelado')
+                  .map(renderStudyRow)
+              : renderEmpty(
+                  'Nenhuma atividade agendada para este dia.',
+                  'Use as setas para consultar outros dias ou agende uma atividade.'
+                )}
           </div>
-        </div>
+        </section>
+
+        {summary.completed.length > 0 && (
+          <section className="panel">
+            <div className="panel-heading">
+              <h2>Concluídos no dia</h2>
+              <span className="subtle">{summary.completed.length} estudos</span>
+            </div>
+            {summary.completed.map(renderStudyRow)}
+          </section>
+        )}
       </>
     );
   };
@@ -4092,7 +4084,7 @@ export const App: React.FC = () => {
             </div>
           </header>
 
-          {activeSession && page !== 'estudo' && page !== 'dashboard' && (
+          {activeSession && page !== 'estudo' && (
             <div className="active-focus-banner">
               <span>
                 ●{' '}
@@ -4113,11 +4105,16 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 className="text-button"
-                onClick={() =>
-                  activeSession.item_cronograma_id
-                    ? navigate('estudo', activeSession.item_cronograma_id)
-                    : setPage('dashboard')
-                }
+                onClick={() => {
+                  if (activeSession.item_cronograma_id) {
+                    navigate('estudo', activeSession.item_cronograma_id);
+                  } else if (activeSession.disciplina_id) {
+                    setStudyId('');
+                    setStudySubjectId(activeSession.disciplina_id);
+                    setStudyTopicId(activeSession.conteudo_id || '');
+                    setPage('estudo');
+                  }
+                }}
               >
                 Abrir sessão →
               </button>
