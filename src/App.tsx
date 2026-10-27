@@ -1242,148 +1242,581 @@ export const App: React.FC = () => {
       .filter((r) => r.fase === 'foco' && dayKey(r.iniciada_em) === day)
       .reduce((sum, r) => sum + sessionElapsed(r, nowTick), 0);
     const overdue = filteredItems.filter(
-      (r) => r.status === 'pendente' && dayKey(r.inicio_previsto) < day
+      (r) => r.status === 'pendente' && dayKey(r.inicio_previsto) < dayKey()
     ).length;
-    const preview = dailySummary(filteredItems, previewDay);
-    const previewLabel =
-      previewDay === shiftDay(dayKey(), 1)
-        ? 'Amanhã'
-        : previewDay === dayKey()
-        ? 'Hoje'
-        : dateOnly(previewDay);
+
+    const completedItemsCount = filteredItems.filter(
+      (r) => r.status === 'concluido'
+    ).length;
+    const pendingItemsCount = filteredItems.filter(
+      (r) => r.status === 'pendente'
+    ).length;
+    const totalActiveItems = completedItemsCount + pendingItemsCount;
+
+    const completedTopicsCount = filteredTopics.filter(
+      (t) => t.status === 'concluido'
+    ).length;
+    const overallPct = totalActiveItems > 0
+      ? Math.round((completedItemsCount / totalActiveItems) * 100)
+      : filteredTopics.length > 0
+      ? Math.round((completedTopicsCount / filteredTopics.length) * 100)
+      : 0;
+
+    const hour = new Date().getHours();
+    const greeting =
+      hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+    const firstName = user?.nome?.split(' ')[0] || 'Estudante';
+
+    const upcomingItems = filteredItems
+      .filter(
+        (r) =>
+          r.status === 'pendente' &&
+          r.inicio_previsto >= new Date(nowTick - 3600000).toISOString()
+      )
+      .sort((a, b) => a.inicio_previsto.localeCompare(b.inicio_previsto))
+      .slice(0, 3);
+
+    const calDate = parseDay(day);
+    const calMonthIndex = calDate.getMonth();
+    const calMonthTitle = new Intl.DateTimeFormat('pt-BR', {
+      month: 'long',
+      year: 'numeric',
+    }).format(calDate);
+
+    const stepDashboardMonth = (dir: number) => {
+      const dt = parseDay(day);
+      dt.setDate(1);
+      dt.setMonth(dt.getMonth() + dir);
+      setDay(dayKey(dt));
+    };
+
+    const dayHasItems = (d: string) =>
+      filteredItems.some(
+        (i) => i.status !== 'cancelado' && dayKey(i.inicio_previsto) === d
+      );
+
+    const dayItemsList = [...summary.pending, ...summary.completed];
+
     return (
-      <>
-        <div className="dashboard-summary-bar">
-          <div className="day-navigation">
-            <button
-              type="button"
-              className="icon-button"
-              aria-label="Dia anterior"
-              onClick={() => setDay(shiftDay(day, -1))}
-            >
-              ‹
-            </button>
-            <input
-              type="date"
-              aria-label="Dia do resumo"
-              value={day}
-              onChange={(e) => e.target.value && setDay(e.target.value)}
-            />
-            <button
-              type="button"
-              className="icon-button"
-              aria-label="Próximo dia"
-              onClick={() => setDay(shiftDay(day, 1))}
-            >
-              ›
-            </button>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => setDay(dayKey())}
-            >
-              Hoje
-            </button>
+      <div className="edusphere-dashboard">
+        <div className="dash-main-col">
+          {/* Top Row: Hero Greeting + 3 Stat Cards */}
+          <div className="dash-hero-row">
+            <section className="dash-hero-card">
+              <div className="dash-hero-copy">
+                <h2>
+                  {greeting}, {firstName}!
+                </h2>
+                <p>
+                  {summary.pending.length > 0
+                    ? `Continue firme! Você tem ${summary.pending.length} atividade(s) planejada(s) para ${
+                        day === dayKey() ? 'hoje' : dateOnly(day)
+                      }.`
+                    : 'Seu esforço consistente de hoje constrói a sua aprovação de amanhã.'}
+                </p>
+                <button
+                  type="button"
+                  className="primary dash-hero-cta"
+                  onClick={() => {
+                    if (activeSession?.item_cronograma_id) {
+                      navigate('estudo', activeSession.item_cronograma_id);
+                    } else if (summary.pending[0]) {
+                      navigate('estudo', summary.pending[0].id);
+                    } else if (upcomingItems[0]) {
+                      navigate('estudo', upcomingItems[0].id);
+                    } else {
+                      setPage('cronograma');
+                    }
+                  }}
+                >
+                  Continuar estudando →
+                </button>
+              </div>
+              <div className="dash-hero-art" aria-hidden="true">
+                <svg viewBox="0 0 180 130" fill="none">
+                  <circle cx="122" cy="65" r="52" fill="currentColor" opacity="0.08" />
+                  <rect x="34" y="88" width="112" height="12" rx="4" fill="#d97745" opacity="0.85" />
+                  <rect x="42" y="74" width="96" height="14" rx="4" fill="#1b4d3e" />
+                  <rect x="52" y="34" width="76" height="48" rx="6" fill="#236950" />
+                  <rect x="58" y="40" width="64" height="34" rx="3" fill="#f6f5f0" />
+                  <circle cx="90" cy="57" r="6" fill="#d97745" />
+                  <path d="M138 30c6-4 14-4 20 0M142 40c5-3 11-3 16 0" stroke="#d97745" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+              </div>
+            </section>
+
+            <div className="dash-stat-cards">
+              <article className="dash-stat-card">
+                <span className="dash-stat-icon tone-green" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                  </svg>
+                </span>
+                <span className="dash-stat-label">Disciplinas</span>
+                <strong className="dash-stat-value">{filteredSubjects.length}</strong>
+                <button
+                  type="button"
+                  className="dash-stat-link"
+                  onClick={() => setPage('cadastro')}
+                >
+                  Ver todas →
+                </button>
+              </article>
+
+              <article className="dash-stat-card">
+                <span className="dash-stat-icon tone-teal" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </span>
+                <span className="dash-stat-label">Concluídos no dia</span>
+                <strong className="dash-stat-value">{summary.completed.length}</strong>
+                <button
+                  type="button"
+                  className="dash-stat-link"
+                  onClick={() => setPage('cronograma')}
+                >
+                  Ver cronograma →
+                </button>
+              </article>
+
+              <article className="dash-stat-card">
+                <span className="dash-stat-icon tone-amber" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="9" />
+                    <polyline points="12 7 12 12 15 15" />
+                  </svg>
+                </span>
+                <span className="dash-stat-label">Foco no dia</span>
+                <strong className="dash-stat-value">{duration(focused)}</strong>
+                <button
+                  type="button"
+                  className="dash-stat-link"
+                  onClick={() => setPage('agenda')}
+                >
+                  {duration(summary.seconds)} planejados →
+                </button>
+              </article>
+            </div>
           </div>
 
-          <div className="metrics-inline">
-            <div className="metric-item">
-              <strong>{summary.pending.length}</strong>
-              <span>pendentes</span>
+          {/* Minhas Disciplinas (Course Cards Row) */}
+          <section className="dash-section-card">
+            <div className="dash-section-head">
+              <h2>Minhas disciplinas</h2>
+              <button
+                type="button"
+                className="view-all-link"
+                onClick={() => setPage('cadastro')}
+              >
+                Ver todas →
+              </button>
             </div>
-            <div className="metric-item">
-              <strong>{summary.completed.length}</strong>
-              <span>concluídos</span>
-            </div>
-            <div className="metric-item">
-              <strong>{duration(summary.seconds)}</strong>
-              <span>planejados</span>
-            </div>
-            <div className="metric-item">
-              <strong>{duration(focused)}</strong>
-              <span>de foco</span>
-            </div>
+
+            {filteredSubjects.length > 0 ? (
+              <div className="dash-course-grid">
+                {filteredSubjects.slice(0, 4).map((sub, idx) => {
+                  const subTopics = conteudos.filter(
+                    (c) => c.disciplina_id === sub.id
+                  );
+                  const subDoneTopics = subTopics.filter(
+                    (c) => c.status === 'concluido'
+                  ).length;
+                  const subItems = filteredItems.filter(
+                    (i) =>
+                      i.disciplina_id === sub.id && i.status !== 'cancelado'
+                  );
+                  const subDoneItems = subItems.filter(
+                    (i) => i.status === 'concluido'
+                  ).length;
+                  const totalUnits = subTopics.length || subItems.length || 1;
+                  const doneUnits = subTopics.length
+                    ? subDoneTopics
+                    : subDoneItems;
+                  const pct = Math.min(
+                    100,
+                    Math.round((doneUnits / totalUnits) * 100)
+                  );
+                  const toneIndex = idx % 4;
+
+                  return (
+                    <article
+                      key={sub.id}
+                      className="dash-course-card"
+                      onClick={() => {
+                        setContest(sub.concurso_id);
+                        setCadSubjectId(sub.id);
+                        setPage('cadastro');
+                      }}
+                    >
+                      <div className={`dash-course-banner palette-${toneIndex}`}>
+                        <span className="dash-course-weight">
+                          Peso {sub.peso}
+                        </span>
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.75"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                        </svg>
+                      </div>
+                      <div className="dash-course-body">
+                        <h3>{sub.nome}</h3>
+                        <p>
+                          {competition(sub.concurso_id)?.nome || 'Estudo geral'}
+                        </p>
+                        <div className="dash-course-progress">
+                          <div className="dash-progress-track">
+                            <div
+                              className={`dash-progress-fill palette-${toneIndex}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span>{pct}%</span>
+                        </div>
+                        <small>
+                          {subTopics.length
+                            ? `${subDoneTopics} / ${subTopics.length} conteúdos`
+                            : `${subDoneItems} / ${subItems.length} estudos`}
+                        </small>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              renderEmpty(
+                'Nenhuma disciplina cadastrada.',
+                'Cadastre um estudo ou importe seu edital com IA para acompanhar suas matérias aqui.'
+              )
+            )}
+          </section>
+
+          {/* Bottom Split: Progresso Geral + Roteiro do Dia */}
+          <div className="dash-bottom-row">
+            <section className="dash-section-card dash-progress-card">
+              <div className="dash-section-head">
+                <h2>Progresso dos estudos</h2>
+              </div>
+
+              <div className="dash-progress-body">
+                <div
+                  className="dash-donut"
+                  style={
+                    {
+                      '--donut-deg': `${Math.round((overallPct / 100) * 360)}deg`,
+                    } as React.CSSProperties
+                  }
+                >
+                  <div>
+                    <strong>{overallPct}%</strong>
+                    <span>Concluído</span>
+                  </div>
+                </div>
+
+                <ul className="dash-progress-legend">
+                  <li>
+                    <span className="legend-dot dot-done" />
+                    <span>Concluídos</span>
+                    <b>{completedItemsCount}</b>
+                  </li>
+                  <li>
+                    <span className="legend-dot dot-pending" />
+                    <span>Pendentes hoje</span>
+                    <b>{summary.pending.length}</b>
+                  </li>
+                  <li>
+                    <span className="legend-dot dot-overdue" />
+                    <span>Em atraso</span>
+                    <b>{overdue}</b>
+                  </li>
+                </ul>
+              </div>
+
+              {overdue > 0 ? (
+                <button
+                  type="button"
+                  className="dash-progress-callout is-warning"
+                  onClick={() => {
+                    setFilters((f) => ({ ...f, scheduleStatus: 'pendente' }));
+                    setPage('cronograma');
+                  }}
+                >
+                  <span className="callout-badge">!</span>
+                  <div>
+                    <strong>{overdue} atividade(s) de dias anteriores</strong>
+                    <span>Clique para revisar ou replanejar no cronograma →</span>
+                  </div>
+                </button>
+              ) : (
+                <div className="dash-progress-callout">
+                  <span className="callout-badge">✓</span>
+                  <div>
+                    <strong>Bom ritmo de estudo!</strong>
+                    <span>Continue cumprindo os blocos planejados na semana.</span>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <section className="dash-section-card dash-activity-card">
+              <div className="dash-section-head">
+                <div>
+                  <h2>
+                    {day === dayKey()
+                      ? 'Roteiro de hoje'
+                      : `Roteiro · ${dateOnly(day)}`}
+                  </h2>
+                </div>
+                <div className="dash-day-mini-controls">
+                  {day !== dayKey() && (
+                    <button
+                      type="button"
+                      className="row-btn"
+                      onClick={() => setDay(dayKey())}
+                    >
+                      Hoje
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="view-all-link"
+                    onClick={() => setPage('cronograma')}
+                  >
+                    Ver tudo →
+                  </button>
+                </div>
+              </div>
+
+              <div className="dash-activity-list">
+                {dayItemsList.length > 0
+                  ? dayItemsList.map(renderStudyRow)
+                  : renderEmpty(
+                      'Nenhuma atividade neste dia.',
+                      'Selecione outro dia no calendário ao lado ou abra o cronograma.'
+                    )}
+              </div>
+            </section>
           </div>
+
+          {/* Bottom Goal Banner */}
+          <section className="dash-goal-banner">
+            <div className="dash-goal-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="6" />
+                <circle cx="12" cy="12" r="2" />
+              </svg>
+            </div>
+            <div className="dash-goal-copy">
+              <h3>Mantenha suas revisões em dia</h3>
+              <p>
+                Distribua os conteúdos do edital nos seus horários livres e acompanhe cada ciclo até a prova.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="primary"
+              onClick={() => setPage('cronograma')}
+            >
+              Planejar horários →
+            </button>
+          </section>
         </div>
 
-        {overdue > 0 && (
-          <button
-            type="button"
-            className="overdue-notice"
-            onClick={() => {
-              setFilters((f) => ({ ...f, scheduleStatus: 'pendente' }));
-              setPage('cronograma');
-            }}
-          >
-            Você tem {overdue} atividade(s) pendente(s) de dias anteriores.
-            Abrir cronograma →
-          </button>
-        )}
-
-        <section className="panel">
-          <div className="panel-heading">
-            <h2>{day === dayKey() ? 'Roteiro de hoje' : dateOnly(day)}</h2>
-          </div>
-          <div className="dashboard-day-scroll">
-            {summary.pending.length
-              ? summary.pending.map(renderStudyRow)
-              : renderEmpty(
-                  summary.completed.length
-                    ? 'Atividades do dia concluídas.'
-                    : 'Nenhuma atividade agendada para este dia.',
-                  summary.completed.length
-                    ? 'Você pode revisar uma matéria ou planejar o próximo dia.'
-                    : 'Agende uma atividade ou consulte os próximos dias abaixo.'
-                )}
-          </div>
-        </section>
-
-        <section className="panel dashboard-preview">
-          <div className="panel-heading">
-            <h2>
-              <span className="dashboard-preview-navigation">
+        {/* Right Sidebar Rail: Calendar + Upcoming + Quick Links */}
+        <aside className="dash-side-col" aria-label="Calendário e próximas atividades">
+          <section className="dash-section-card dash-calendar-card">
+            <div className="dash-calendar-head">
+              <h2>{calMonthTitle}</h2>
+              <div className="dash-calendar-nav">
                 <button
                   type="button"
                   className="icon-button"
-                  aria-label="Dia anterior da prévia"
-                  onClick={() => setPreviewDay(shiftDay(previewDay, -1))}
+                  aria-label="Mês anterior"
+                  onClick={() => stepDashboardMonth(-1)}
                 >
                   ‹
                 </button>
-                <span>{previewLabel}</span>
                 <button
                   type="button"
                   className="icon-button"
-                  aria-label="Próximo dia da prévia"
-                  onClick={() => setPreviewDay(shiftDay(previewDay, 1))}
+                  aria-label="Próximo mês"
+                  onClick={() => stepDashboardMonth(1)}
                 >
                   ›
                 </button>
-              </span>
-            </h2>
-          </div>
-          <div className="dashboard-day-scroll">
-            {preview.items.filter((i) => i.status !== 'cancelado').length
-              ? preview.items
-                  .filter((i) => i.status !== 'cancelado')
-                  .map(renderStudyRow)
-              : renderEmpty(
-                  'Nenhuma atividade agendada para este dia.',
-                  'Use as setas para consultar outros dias ou agende uma atividade.'
-                )}
-          </div>
-        </section>
-
-        {summary.completed.length > 0 && (
-          <section className="panel">
-            <div className="panel-heading">
-              <h2>Concluídos no dia</h2>
-              <span className="subtle">{summary.completed.length} estudos</span>
+              </div>
             </div>
-            {summary.completed.map(renderStudyRow)}
+
+            <div className="dash-cal-weekdays">
+              {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((w) => (
+                <span key={w}>{w}</span>
+              ))}
+            </div>
+
+            <div className="dash-cal-grid">
+              {monthDays(day).map((d) => {
+                const dObj = parseDay(d);
+                const outside = dObj.getMonth() !== calMonthIndex;
+                const isSelected = d === day;
+                const isToday = d === dayKey();
+                const hasEv = dayHasItems(d);
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    className={`dash-cal-day ${outside ? 'outside' : ''} ${
+                      isSelected ? 'selected' : ''
+                    } ${isToday ? 'today' : ''}`}
+                    onClick={() => setDay(d)}
+                  >
+                    <span>{dObj.getDate()}</span>
+                    {hasEv && <i className="dash-cal-dot" />}
+                  </button>
+                );
+              })}
+            </div>
           </section>
-        )}
-      </>
+
+          <section className="dash-section-card dash-upcoming-card">
+            <div className="dash-section-head">
+              <h2>Próximos estudos</h2>
+              <button
+                type="button"
+                className="view-all-link"
+                onClick={() => setPage('agenda')}
+              >
+                Ver agenda →
+              </button>
+            </div>
+
+            {upcomingItems.length > 0 ? (
+              <div className="dash-upcoming-list">
+                {upcomingItems.map((item, idx) => {
+                  const itemDay = dayKey(item.inicio_previsto);
+                  const dayTag =
+                    itemDay === dayKey()
+                      ? 'Hoje'
+                      : itemDay === shiftDay(dayKey(), 1)
+                      ? 'Amanhã'
+                      : dateOnly(itemDay);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="dash-upcoming-item"
+                      onClick={() => navigate('estudo', item.id)}
+                    >
+                      <span
+                        className={`dash-upcoming-icon palette-${idx % 4}`}
+                        aria-hidden="true"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                        </svg>
+                      </span>
+                      <div className="dash-upcoming-copy">
+                        <strong>{subjectName(item.disciplina_id)}</strong>
+                        <span>
+                          {topicName(item.conteudo_id) || 'Estudo da disciplina'}
+                        </span>
+                        <small>
+                          {dayTag}, {timeLabel(item.inicio_previsto)}
+                        </small>
+                      </div>
+                      <span className="dash-upcoming-arrow">›</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="dash-upcoming-empty">
+                Nenhuma atividade futura pendente.
+              </p>
+            )}
+          </section>
+
+          <section className="dash-section-card dash-quick-card">
+            <div className="dash-section-head">
+              <h2>Acesso rápido</h2>
+            </div>
+            <div className="dash-quick-grid">
+              <button
+                type="button"
+                className="dash-quick-tile"
+                onClick={() => {
+                  setImportingStudy(true);
+                  setPage('cadastro');
+                }}
+              >
+                <span className="tone-green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                  </svg>
+                </span>
+                <small>Novo Edital</small>
+              </button>
+
+              <button
+                type="button"
+                className="dash-quick-tile"
+                onClick={() => setPage('cronograma')}
+              >
+                <span className="tone-teal">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="8" y1="6" x2="21" y2="6" />
+                    <line x1="8" y1="12" x2="21" y2="12" />
+                    <line x1="8" y1="18" x2="21" y2="18" />
+                    <line x1="3" y1="6" x2="3.01" y2="6" />
+                    <line x1="3" y1="12" x2="3.01" y2="12" />
+                    <line x1="3" y1="18" x2="3.01" y2="18" />
+                  </svg>
+                </span>
+                <small>Cronograma</small>
+              </button>
+
+              <button
+                type="button"
+                className="dash-quick-tile"
+                onClick={() => openEditor('anotacoes')}
+              >
+                <span className="tone-amber">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                </span>
+                <small>Anotar</small>
+              </button>
+
+              <button
+                type="button"
+                className="dash-quick-tile"
+                onClick={() => openScheduleModal(day)}
+              >
+                <span className="tone-coral">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </span>
+                <small>Agendar</small>
+              </button>
+            </div>
+          </section>
+        </aside>
+      </div>
     );
   };
 
@@ -3995,10 +4428,14 @@ export const App: React.FC = () => {
 
       <div id="workspace" data-page={page}>
         <aside>
-          <a className="brand" href="http://localhost:3001">
-            revi<span>sumo</span>
-            <span className="brand-dot">.</span>
-          </a>
+          <div className="aside-brand-wrap">
+            <a className="brand" href="http://localhost:3001">
+              revi<span>sumo</span>
+              <span className="brand-dot">.</span>
+            </a>
+            <span className="brand-tagline">Planeje · Estude · Revise</span>
+          </div>
+
           <nav aria-label="Navegação principal">
             {navItems.map((item) => (
               <button
@@ -4016,40 +4453,29 @@ export const App: React.FC = () => {
               </button>
             ))}
           </nav>
-          <div className="aside-footer">
-            <span className="profile">
-              <b id="avatar">{user.nome[0]?.toUpperCase() || 'E'}</b>
-              <span id="username">{user.nome}</span>
-            </span>
-            <button
-              type="button"
-              id="logout"
-              className="logout-icon"
-              onClick={handleLogout}
-            >
-              Sair
-            </button>
+
+          <div className="aside-promo-card">
+            <p>Pequenos blocos geram grandes aprovações.</p>
+            <svg viewBox="0 0 120 68" fill="none" aria-hidden="true">
+              <rect x="20" y="46" width="80" height="14" rx="4" fill="#2d8a6b" />
+              <rect x="24" y="32" width="72" height="14" rx="4" fill="#d97745" />
+              <rect x="28" y="18" width="64" height="14" rx="4" fill="#4f9d81" />
+              <rect x="34" y="22" width="44" height="4" rx="2" fill="#f6f5f0" opacity="0.65" />
+              <rect x="30" y="36" width="48" height="4" rx="2" fill="#f6f5f0" opacity="0.65" />
+              <rect x="26" y="50" width="52" height="4" rx="2" fill="#f6f5f0" opacity="0.65" />
+            </svg>
           </div>
         </aside>
 
         <main>
           <header className="top-bar">
-            <div className="top-bar-title">
-              <h1 id="page-title">{pageTitle}</h1>
-              {page === 'dashboard' && (
-                <span className="top-bar-date">
-                  {new Intl.DateTimeFormat('pt-BR', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                  }).format(new Date())}
-                </span>
-              )}
-            </div>
-
-            <div className="top-bar-controls">
-              {showContestContext && (
-                <div id="contest-context" className="study-switcher">
+            <div className="top-bar-left">
+              {showContestContext ? (
+                <div id="contest-context" className="top-context-bar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
                   <select
                     aria-label="Estudo em foco"
                     value={effectiveContestId}
@@ -4063,7 +4489,39 @@ export const App: React.FC = () => {
                     ))}
                   </select>
                 </div>
+              ) : (
+                <div className="top-bar-title">
+                  <h1 id="page-title">{pageTitle}</h1>
+                </div>
               )}
+            </div>
+
+            <div className="top-bar-controls">
+              <button
+                type="button"
+                className="top-icon-btn"
+                aria-label="Atividades pendentes"
+                title="Abrir cronograma"
+                onClick={() => setPage('cronograma')}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {filteredItems.filter(
+                  (r) => r.status === 'pendente' && dayKey(r.inicio_previsto) <= dayKey()
+                ).length > 0 && (
+                  <span className="notif-badge">
+                    {
+                      filteredItems.filter(
+                        (r) =>
+                          r.status === 'pendente' &&
+                          dayKey(r.inicio_previsto) <= dayKey()
+                      ).length
+                    }
+                  </span>
+                )}
+              </button>
 
               <button
                 type="button"
@@ -4074,6 +4532,23 @@ export const App: React.FC = () => {
               >
                 {theme === 'dark' ? '☀' : '☾'}
               </button>
+
+              <div className="top-profile-pill">
+                <b id="avatar">{user.nome[0]?.toUpperCase() || 'E'}</b>
+                <div className="top-profile-text">
+                  <span id="username">{user.nome}</span>
+                  <small>Estudante</small>
+                </div>
+                <button
+                  type="button"
+                  id="logout"
+                  className="logout-icon"
+                  title="Sair da conta"
+                  onClick={handleLogout}
+                >
+                  Sair
+                </button>
+              </div>
             </div>
           </header>
 
