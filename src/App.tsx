@@ -865,7 +865,7 @@ export const App: React.FC = () => {
           <div className="study-actions study-running-actions">
             <button
               type="button"
-              className="primary"
+              className="focus-button"
               onClick={async () => {
                 if (running.status === 'pausada') {
                   await handleTimerAction('retomar');
@@ -873,11 +873,11 @@ export const App: React.FC = () => {
                 navigate('estudo', item.id);
               }}
             >
-              Continuar estudo
+              Continuar
             </button>
             <button
               type="button"
-              className="text-button danger"
+              className="row-btn danger"
               onClick={() => handleTimerAction('cancelar')}
             >
               Cancelar
@@ -906,21 +906,21 @@ export const App: React.FC = () => {
                     }
                   }}
                 >
-                  ▷ Focar
+                  Focar
                 </button>
               )}
               {item.status !== 'concluido' && (
                 <>
                   <button
                     type="button"
-                    className="secondary"
+                    className="row-btn"
                     onClick={() => openScheduleModal(undefined, item.id)}
                   >
                     Editar
                   </button>
                   <button
                     type="button"
-                    className="text-button danger"
+                    className="row-btn danger"
                     onClick={() => handleDelete('itens_cronograma', item.id)}
                   >
                     Excluir
