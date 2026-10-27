@@ -1248,19 +1248,30 @@ export const App: React.FC = () => {
     const completedItemsCount = filteredItems.filter(
       (r) => r.status === 'concluido'
     ).length;
-    const pendingItemsCount = filteredItems.filter(
-      (r) => r.status === 'pendente'
-    ).length;
-    const totalActiveItems = completedItemsCount + pendingItemsCount;
-
+    const progressSliceTotal =
+      completedItemsCount + summary.pending.length + overdue;
     const completedTopicsCount = filteredTopics.filter(
       (t) => t.status === 'concluido'
     ).length;
-    const overallPct = totalActiveItems > 0
-      ? Math.round((completedItemsCount / totalActiveItems) * 100)
-      : filteredTopics.length > 0
-      ? Math.round((completedTopicsCount / filteredTopics.length) * 100)
-      : 0;
+    const overallPct =
+      progressSliceTotal > 0
+        ? Math.round((completedItemsCount / progressSliceTotal) * 100)
+        : filteredTopics.length > 0
+        ? Math.round((completedTopicsCount / filteredTopics.length) * 100)
+        : 0;
+    const doneDeg =
+      progressSliceTotal > 0
+        ? Math.round((completedItemsCount / progressSliceTotal) * 360)
+        : 0;
+    const pendingEndDeg =
+      progressSliceTotal > 0
+        ? Math.round(
+            ((completedItemsCount + summary.pending.length) /
+              progressSliceTotal) *
+              360
+          )
+        : 0;
+    const overdueEndDeg = progressSliceTotal > 0 ? 360 : 0;
 
     const hour = new Date().getHours();
     const greeting =
@@ -1278,10 +1289,12 @@ export const App: React.FC = () => {
 
     const calDate = parseDay(day);
     const calMonthIndex = calDate.getMonth();
-    const calMonthTitle = new Intl.DateTimeFormat('pt-BR', {
+    const rawMonthTitle = new Intl.DateTimeFormat('pt-BR', {
       month: 'long',
       year: 'numeric',
     }).format(calDate);
+    const calMonthTitle =
+      rawMonthTitle.charAt(0).toUpperCase() + rawMonthTitle.slice(1);
 
     const stepDashboardMonth = (dir: number) => {
       const dt = parseDay(day);
@@ -1299,107 +1312,109 @@ export const App: React.FC = () => {
 
     return (
       <div className="edusphere-dashboard">
-        <div className="dash-main-col">
-          {/* Top Row: Hero Greeting + 3 Stat Cards */}
-          <div className="dash-hero-row">
-            <section className="dash-hero-card">
-              <div className="dash-hero-copy">
-                <h2>
-                  {greeting}, {firstName}!
-                </h2>
-                <p>
-                  {summary.pending.length > 0
-                    ? `Continue firme! Você tem ${summary.pending.length} atividade(s) planejada(s) para ${
-                        day === dayKey() ? 'hoje' : dateOnly(day)
-                      }.`
-                    : 'Seu esforço consistente de hoje constrói a sua aprovação de amanhã.'}
-                </p>
-                <button
-                  type="button"
-                  className="primary dash-hero-cta"
-                  onClick={() => {
-                    if (activeSession?.item_cronograma_id) {
-                      navigate('estudo', activeSession.item_cronograma_id);
-                    } else if (summary.pending[0]) {
-                      navigate('estudo', summary.pending[0].id);
-                    } else if (upcomingItems[0]) {
-                      navigate('estudo', upcomingItems[0].id);
-                    } else {
-                      setPage('cronograma');
-                    }
-                  }}
-                >
-                  Continuar estudando →
-                </button>
-              </div>
-              <div className="dash-hero-art" aria-hidden="true">
-                <svg viewBox="0 0 180 130" fill="none">
-                  <circle cx="122" cy="65" r="52" fill="currentColor" opacity="0.08" />
-                  <rect x="34" y="88" width="112" height="12" rx="4" fill="#d97745" opacity="0.85" />
-                  <rect x="42" y="74" width="96" height="14" rx="4" fill="#1b4d3e" />
-                  <rect x="52" y="34" width="76" height="48" rx="6" fill="#236950" />
-                  <rect x="58" y="40" width="64" height="34" rx="3" fill="#f6f5f0" />
-                  <circle cx="90" cy="57" r="6" fill="#d97745" />
-                  <path d="M138 30c6-4 14-4 20 0M142 40c5-3 11-3 16 0" stroke="#d97745" strokeWidth="2.5" strokeLinecap="round" />
-                </svg>
-              </div>
-            </section>
-
-            <div className="dash-stat-cards">
-              <article className="dash-stat-card">
-                <span className="dash-stat-icon tone-green" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                  </svg>
-                </span>
-                <span className="dash-stat-label">Disciplinas</span>
-                <strong className="dash-stat-value">{filteredSubjects.length}</strong>
-                <button
-                  type="button"
-                  className="dash-stat-link"
-                  onClick={() => setPage('cadastro')}
-                >
-                  Ver todas →
-                </button>
-              </article>
-
-              <article className="dash-stat-card">
-                <span className="dash-stat-icon tone-teal" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </span>
-                <span className="dash-stat-label">Concluídos no dia</span>
-                <strong className="dash-stat-value">{summary.completed.length}</strong>
-                <button
-                  type="button"
-                  className="dash-stat-link"
-                  onClick={() => setPage('cronograma')}
-                >
-                  Ver cronograma →
-                </button>
-              </article>
-
-              <article className="dash-stat-card">
-                <span className="dash-stat-icon tone-amber" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="9" />
-                    <polyline points="12 7 12 12 15 15" />
-                  </svg>
-                </span>
-                <span className="dash-stat-label">Foco no dia</span>
-                <strong className="dash-stat-value">{duration(focused)}</strong>
-                <button
-                  type="button"
-                  className="dash-stat-link"
-                  onClick={() => setPage('agenda')}
-                >
-                  {duration(summary.seconds)} planejados →
-                </button>
-              </article>
+        {/* Top Row: Hero Greeting + 3 Stat Cards (Full Width) */}
+        <div className="dash-hero-row">
+          <section className="dash-hero-card">
+            <div className="dash-hero-copy">
+              <h2>
+                {greeting}, {firstName}!
+              </h2>
+              <p>
+                {summary.pending.length > 0
+                  ? `Continue firme! Você tem ${summary.pending.length} atividade(s) planejada(s) para ${
+                      day === dayKey() ? 'hoje' : dateOnly(day)
+                    }.`
+                  : 'Seu esforço consistente de hoje constrói a sua aprovação de amanhã.'}
+              </p>
+              <button
+                type="button"
+                className="primary dash-hero-cta"
+                onClick={() => {
+                  if (activeSession?.item_cronograma_id) {
+                    navigate('estudo', activeSession.item_cronograma_id);
+                  } else if (summary.pending[0]) {
+                    navigate('estudo', summary.pending[0].id);
+                  } else if (upcomingItems[0]) {
+                    navigate('estudo', upcomingItems[0].id);
+                  } else {
+                    setPage('cronograma');
+                  }
+                }}
+              >
+                Continuar estudando →
+              </button>
             </div>
+            <div className="dash-hero-art" aria-hidden="true">
+              <svg viewBox="0 0 180 130" fill="none">
+                <circle cx="122" cy="65" r="52" fill="currentColor" opacity="0.08" />
+                <rect x="34" y="88" width="112" height="12" rx="4" fill="#d97745" opacity="0.85" />
+                <rect x="42" y="74" width="96" height="14" rx="4" fill="#1b4d3e" />
+                <rect x="52" y="34" width="76" height="48" rx="6" fill="#236950" />
+                <rect x="58" y="40" width="64" height="34" rx="3" fill="#f6f5f0" />
+                <circle cx="90" cy="57" r="6" fill="#d97745" />
+                <path d="M138 30c6-4 14-4 20 0M142 40c5-3 11-3 16 0" stroke="#d97745" strokeWidth="2.5" strokeLinecap="round" />
+              </svg>
+            </div>
+          </section>
+
+          <div className="dash-stat-cards">
+            <article className="dash-stat-card">
+              <span className="dash-stat-icon tone-green" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+              </span>
+              <span className="dash-stat-label">Disciplinas</span>
+              <strong className="dash-stat-value">{filteredSubjects.length}</strong>
+              <button
+                type="button"
+                className="dash-stat-link"
+                onClick={() => setPage('cadastro')}
+              >
+                Ver todas →
+              </button>
+            </article>
+
+            <article className="dash-stat-card">
+              <span className="dash-stat-icon tone-teal" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </span>
+              <span className="dash-stat-label">Concluídos</span>
+              <strong className="dash-stat-value">{summary.completed.length}</strong>
+              <button
+                type="button"
+                className="dash-stat-link"
+                onClick={() => setPage('cronograma')}
+              >
+                Ver todos →
+              </button>
+            </article>
+
+            <article className="dash-stat-card">
+              <span className="dash-stat-icon tone-amber" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <polyline points="12 7 12 12 15 15" />
+                </svg>
+              </span>
+              <span className="dash-stat-label">Foco hoje</span>
+              <strong className="dash-stat-value">{duration(focused)}</strong>
+              <button
+                type="button"
+                className="dash-stat-link"
+                onClick={() => setPage('agenda')}
+              >
+                Ver agenda →
+              </button>
+            </article>
           </div>
+        </div>
+
+        <div className="dash-body-grid">
+          <div className="dash-main-col">
 
           {/* Minhas Disciplinas (Course Cards Row) */}
           <section className="dash-section-card">
@@ -1510,7 +1525,9 @@ export const App: React.FC = () => {
                   className="dash-donut"
                   style={
                     {
-                      '--donut-deg': `${Math.round((overallPct / 100) * 360)}deg`,
+                      '--done-deg': `${doneDeg}deg`,
+                      '--pending-deg': `${pendingEndDeg}deg`,
+                      '--overdue-deg': `${overdueEndDeg}deg`,
                     } as React.CSSProperties
                   }
                 >
@@ -1548,16 +1565,26 @@ export const App: React.FC = () => {
                     setPage('cronograma');
                   }}
                 >
-                  <span className="callout-badge">!</span>
-                  <div>
+                  <i className="callout-badge" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                  </i>
+                  <div className="dash-progress-callout-copy">
                     <strong>{overdue} atividade(s) de dias anteriores</strong>
-                    <span>Clique para revisar ou replanejar no cronograma →</span>
+                    <span>Revisar ou replanejar no cronograma →</span>
                   </div>
                 </button>
               ) : (
                 <div className="dash-progress-callout">
-                  <span className="callout-badge">✓</span>
-                  <div>
+                  <i className="callout-badge" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </i>
+                  <div className="dash-progress-callout-copy">
                     <strong>Bom ritmo de estudo!</strong>
                     <span>Continue cumprindo os blocos planejados na semana.</span>
                   </div>
@@ -1596,7 +1623,83 @@ export const App: React.FC = () => {
 
               <div className="dash-activity-list">
                 {dayItemsList.length > 0
-                  ? dayItemsList.map(renderStudyRow)
+                  ? dayItemsList.slice(0, 4).map((item, idx) => {
+                      const isDone = item.status === 'concluido';
+                      return (
+                        <article
+                          key={item.id}
+                          className={`dash-roteiro-row ${isDone ? 'is-done' : ''}`}
+                        >
+                          <button
+                            type="button"
+                            className={`dash-roteiro-icon ${
+                              isDone ? 'done' : `palette-${idx % 4}`
+                            }`}
+                            aria-label={
+                              isDone ? 'Estudo concluído' : 'Abrir foco desta matéria'
+                            }
+                            onClick={() => navigate('estudo', item.id)}
+                          >
+                            {isDone ? (
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            ) : (
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                              </svg>
+                            )}
+                          </button>
+
+                          <div
+                            className="dash-roteiro-info"
+                            onClick={() => navigate('estudo', item.id)}
+                          >
+                            <strong>{subjectName(item.disciplina_id)}</strong>
+                            <span>
+                              {item.tipo === 'revisao'
+                                ? `↻ Revisão ${item.revisao_numero || ''} · `
+                                : ''}
+                              {topicName(item.conteudo_id) ||
+                                'Estudo da disciplina'}
+                            </span>
+                            <small>
+                              {timeLabel(item.inicio_previsto)} –{' '}
+                              {timeLabel(endOf(item))} ·{' '}
+                              {duration(item.duracao_segundos)}
+                            </small>
+                          </div>
+
+                          <div className="dash-roteiro-actions">
+                            {isDone ? (
+                              <span className="badge status-concluido">
+                                Concluído
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="row-btn dash-focus-btn"
+                                onClick={async () => {
+                                  try {
+                                    setPhase('foco');
+                                    await startFocus({
+                                      item_cronograma_id: item.id,
+                                      disciplina_id: item.disciplina_id,
+                                      conteudo_id: item.conteudo_id,
+                                    });
+                                    navigate('estudo', item.id);
+                                  } catch (err: any) {
+                                    showToast(err.message);
+                                  }
+                                }}
+                              >
+                                Focar →
+                              </button>
+                            )}
+                          </div>
+                        </article>
+                      );
+                    })
                   : renderEmpty(
                       'Nenhuma atividade neste dia.',
                       'Selecione outro dia no calendário ao lado ou abra o cronograma.'
@@ -1628,194 +1731,195 @@ export const App: React.FC = () => {
               Planejar horários →
             </button>
           </section>
-        </div>
+          </div>
 
-        {/* Right Sidebar Rail: Calendar + Upcoming + Quick Links */}
-        <aside className="dash-side-col" aria-label="Calendário e próximas atividades">
-          <section className="dash-section-card dash-calendar-card">
-            <div className="dash-calendar-head">
-              <h2>{calMonthTitle}</h2>
-              <div className="dash-calendar-nav">
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label="Mês anterior"
-                  onClick={() => stepDashboardMonth(-1)}
-                >
-                  ‹
-                </button>
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label="Próximo mês"
-                  onClick={() => stepDashboardMonth(1)}
-                >
-                  ›
-                </button>
-              </div>
-            </div>
-
-            <div className="dash-cal-weekdays">
-              {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((w) => (
-                <span key={w}>{w}</span>
-              ))}
-            </div>
-
-            <div className="dash-cal-grid">
-              {monthDays(day).map((d) => {
-                const dObj = parseDay(d);
-                const outside = dObj.getMonth() !== calMonthIndex;
-                const isSelected = d === day;
-                const isToday = d === dayKey();
-                const hasEv = dayHasItems(d);
-                return (
+          {/* Right Sidebar Rail: Calendar + Upcoming + Quick Links */}
+          <div className="dash-side-col" role="region" aria-label="Calendário e próximas atividades">
+            <section className="dash-section-card dash-calendar-card">
+              <div className="dash-calendar-head">
+                <h2>{calMonthTitle}</h2>
+                <div className="dash-calendar-nav">
                   <button
-                    key={d}
                     type="button"
-                    className={`dash-cal-day ${outside ? 'outside' : ''} ${
-                      isSelected ? 'selected' : ''
-                    } ${isToday ? 'today' : ''}`}
-                    onClick={() => setDay(d)}
+                    className="icon-button"
+                    aria-label="Mês anterior"
+                    onClick={() => stepDashboardMonth(-1)}
                   >
-                    <span>{dObj.getDate()}</span>
-                    {hasEv && <i className="dash-cal-dot" />}
+                    ‹
                   </button>
-                );
-              })}
-            </div>
-          </section>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label="Próximo mês"
+                    onClick={() => stepDashboardMonth(1)}
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
 
-          <section className="dash-section-card dash-upcoming-card">
-            <div className="dash-section-head">
-              <h2>Próximos estudos</h2>
-              <button
-                type="button"
-                className="view-all-link"
-                onClick={() => setPage('agenda')}
-              >
-                Ver agenda →
-              </button>
-            </div>
+              <div className="dash-cal-weekdays">
+                {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((w) => (
+                  <span key={w}>{w}</span>
+                ))}
+              </div>
 
-            {upcomingItems.length > 0 ? (
-              <div className="dash-upcoming-list">
-                {upcomingItems.map((item, idx) => {
-                  const itemDay = dayKey(item.inicio_previsto);
-                  const dayTag =
-                    itemDay === dayKey()
-                      ? 'Hoje'
-                      : itemDay === shiftDay(dayKey(), 1)
-                      ? 'Amanhã'
-                      : dateOnly(itemDay);
+              <div className="dash-cal-grid">
+                {monthDays(day).map((d) => {
+                  const dObj = parseDay(d);
+                  const outside = dObj.getMonth() !== calMonthIndex;
+                  const isSelected = d === day;
+                  const isToday = d === dayKey();
+                  const hasEv = dayHasItems(d);
                   return (
                     <button
-                      key={item.id}
+                      key={d}
                       type="button"
-                      className="dash-upcoming-item"
-                      onClick={() => navigate('estudo', item.id)}
+                      className={`dash-cal-day ${outside ? 'outside' : ''} ${
+                        isSelected ? 'selected' : ''
+                      } ${isToday ? 'today' : ''}`}
+                      onClick={() => setDay(d)}
                     >
-                      <span
-                        className={`dash-upcoming-icon palette-${idx % 4}`}
-                        aria-hidden="true"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                        </svg>
-                      </span>
-                      <div className="dash-upcoming-copy">
-                        <strong>{subjectName(item.disciplina_id)}</strong>
-                        <span>
-                          {topicName(item.conteudo_id) || 'Estudo da disciplina'}
-                        </span>
-                        <small>
-                          {dayTag}, {timeLabel(item.inicio_previsto)}
-                        </small>
-                      </div>
-                      <span className="dash-upcoming-arrow">›</span>
+                      <span>{dObj.getDate()}</span>
+                      {hasEv && <i className="dash-cal-dot" />}
                     </button>
                   );
                 })}
               </div>
-            ) : (
-              <p className="dash-upcoming-empty">
-                Nenhuma atividade futura pendente.
-              </p>
-            )}
-          </section>
 
-          <section className="dash-section-card dash-quick-card">
-            <div className="dash-section-head">
-              <h2>Acesso rápido</h2>
-            </div>
-            <div className="dash-quick-grid">
-              <button
-                type="button"
-                className="dash-quick-tile"
-                onClick={() => {
-                  setImportingStudy(true);
-                  setPage('cadastro');
-                }}
-              >
-                <span className="tone-green">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                  </svg>
-                </span>
-                <small>Novo Edital</small>
-              </button>
+              <div className="dash-side-divider" />
 
-              <button
-                type="button"
-                className="dash-quick-tile"
-                onClick={() => setPage('cronograma')}
-              >
-                <span className="tone-teal">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="8" y1="6" x2="21" y2="6" />
-                    <line x1="8" y1="12" x2="21" y2="12" />
-                    <line x1="8" y1="18" x2="21" y2="18" />
-                    <line x1="3" y1="6" x2="3.01" y2="6" />
-                    <line x1="3" y1="12" x2="3.01" y2="12" />
-                    <line x1="3" y1="18" x2="3.01" y2="18" />
-                  </svg>
-                </span>
-                <small>Cronograma</small>
-              </button>
+              <div className="dash-section-head dash-upcoming-head">
+                <h2>Próximos estudos</h2>
+                <button
+                  type="button"
+                  className="view-all-link"
+                  onClick={() => setPage('agenda')}
+                >
+                  Ver agenda →
+                </button>
+              </div>
 
-              <button
-                type="button"
-                className="dash-quick-tile"
-                onClick={() => openEditor('anotacoes')}
-              >
-                <span className="tone-amber">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                  </svg>
-                </span>
-                <small>Anotar</small>
-              </button>
+              {upcomingItems.length > 0 ? (
+                <div className="dash-upcoming-list">
+                  {upcomingItems.map((item, idx) => {
+                    const itemDay = dayKey(item.inicio_previsto);
+                    const dayTag =
+                      itemDay === dayKey()
+                        ? 'Hoje'
+                        : itemDay === shiftDay(dayKey(), 1)
+                        ? 'Amanhã'
+                        : dateOnly(itemDay);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className="dash-upcoming-item"
+                        onClick={() => navigate('estudo', item.id)}
+                      >
+                        <span
+                          className={`dash-upcoming-icon palette-${idx % 4}`}
+                          aria-hidden="true"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                          </svg>
+                        </span>
+                        <div className="dash-upcoming-copy">
+                          <strong>{subjectName(item.disciplina_id)}</strong>
+                          <span>
+                            {topicName(item.conteudo_id) || 'Estudo da disciplina'}
+                          </span>
+                          <small>
+                            {dayTag}, {timeLabel(item.inicio_previsto)}
+                          </small>
+                        </div>
+                        <span className="dash-upcoming-arrow">›</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="dash-upcoming-empty">
+                  Nenhuma atividade futura pendente.
+                </p>
+              )}
+            </section>
 
-              <button
-                type="button"
-                className="dash-quick-tile"
-                onClick={() => openScheduleModal(day)}
-              >
-                <span className="tone-coral">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                </span>
-                <small>Agendar</small>
-              </button>
-            </div>
-          </section>
-        </aside>
+            <section className="dash-section-card dash-quick-card">
+              <div className="dash-section-head">
+                <h2>Acesso rápido</h2>
+              </div>
+              <div className="dash-quick-grid">
+                <button
+                  type="button"
+                  className="dash-quick-tile"
+                  onClick={() => {
+                    setImportingStudy(true);
+                    setPage('cadastro');
+                  }}
+                >
+                  <span className="tone-green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                  </span>
+                  <small>Novo Edital</small>
+                </button>
+
+                <button
+                  type="button"
+                  className="dash-quick-tile"
+                  onClick={() => setPage('cronograma')}
+                >
+                  <span className="tone-teal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="8" y1="6" x2="21" y2="6" />
+                      <line x1="8" y1="12" x2="21" y2="12" />
+                      <line x1="8" y1="18" x2="21" y2="18" />
+                      <line x1="3" y1="6" x2="3.01" y2="6" />
+                      <line x1="3" y1="12" x2="3.01" y2="12" />
+                      <line x1="3" y1="18" x2="3.01" y2="18" />
+                    </svg>
+                  </span>
+                  <small>Cronograma</small>
+                </button>
+
+                <button
+                  type="button"
+                  className="dash-quick-tile"
+                  onClick={() => openEditor('anotacoes')}
+                >
+                  <span className="tone-amber">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                  </span>
+                  <small>Anotar</small>
+                </button>
+
+                <button
+                  type="button"
+                  className="dash-quick-tile"
+                  onClick={() => openScheduleModal(day)}
+                >
+                  <span className="tone-coral">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                  </span>
+                  <small>Agendar</small>
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
       </div>
     );
   };
