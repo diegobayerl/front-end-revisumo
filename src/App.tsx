@@ -1323,13 +1323,6 @@ export const App: React.FC = () => {
         <section className="panel">
           <div className="panel-heading">
             <h2>{day === dayKey() ? 'Roteiro de hoje' : dateOnly(day)}</h2>
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => openScheduleModal(day)}
-            >
-              + Agendar
-            </button>
           </div>
           <div className="dashboard-day-scroll">
             {summary.pending.length
