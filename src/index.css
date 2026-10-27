@@ -613,7 +613,6 @@ textarea {
   gap: 12px;
 }
 
-.top-icon-btn,
 .theme-toggle {
   position: relative;
   width: 40px;
@@ -628,32 +627,14 @@ textarea {
   padding: 0;
 }
 
-.top-icon-btn svg,
 .theme-toggle svg {
   width: 18px;
   height: 18px;
 }
 
-.top-icon-btn:hover,
 .theme-toggle:hover {
   background: var(--surface-alt);
   color: var(--ink);
-}
-
-.notif-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 99px;
-  background: var(--terracotta);
-  color: #ffffff;
-  font-size: 0.65rem;
-  font-weight: 700;
-  display: grid;
-  place-items: center;
 }
 
 .top-profile-pill {
