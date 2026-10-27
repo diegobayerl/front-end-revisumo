@@ -366,6 +366,14 @@ export const App: React.FC = () => {
     return () => clearInterval(id);
   }, [clockOffset]);
 
+  useEffect(() => {
+    if (!user) {
+      document.title = registering ? 'Criar conta' : 'Entrar';
+    } else {
+      document.title = pageTitles[page];
+    }
+  }, [user, registering, page]);
+
   // Helpers
   const competition = (id?: string | null) => concursos.find((r) => r.id === id);
   const subject = (id?: string | null) => disciplinas.find((r) => r.id === id);
